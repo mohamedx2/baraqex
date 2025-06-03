@@ -30,8 +30,9 @@ export { renderToString as baraqexRenderToString, hydrate as baraqexHydrate } fr
 // Export middleware functions
 export { requestLogger, errorHandler, notFoundHandler, rateLimit } from './server/middleware.js';
 
-// Export WASM utilities
-export { initNodeWasm, loadGoWasmFromFile ,loadGoWasm} from './wasm.js';
+// Export WASM functionality (browser-only functions)
+export { loadGoWasm, callWasmFunction, isWasmReady, getWasmFunctions, useGoWasm } from './wasm.js';
+export type { GoWasmOptions, GoWasmInstance } from './wasm.js';
 
 console.log('Baraqex - powered by Frontend Hamroun Framework with additional utilities');
 

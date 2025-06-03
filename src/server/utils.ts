@@ -37,7 +37,17 @@ export function hashString(input: string, salt: string = ''): string {
  */
 export function getPagination(req: Request): { page: number; limit: number; skip: number } {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
-  const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string) || 20));
+  const rawLimit = parseInt(req.query.limit as string);
+  
+  // If no limit is provided or limit is 0/invalid, use default of 20
+  // If limit is provided and valid, enforce min of 1 and max of 100
+  let limit: number;
+  if (isNaN(rawLimit) || rawLimit <= 0) {
+    limit = 20; // Default limit
+  } else {
+    limit = Math.max(1, Math.min(100, rawLimit));
+  }
+  
   const skip = (page - 1) * limit;
   
   return { page, limit, skip };

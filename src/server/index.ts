@@ -84,18 +84,17 @@ export class Server {
     
     // Setup auth if configured
     if (this.config.auth) {
-      // Fix by explicitly typing the auth configuration
       this.auth = new AuthService({
         secret: this.config.auth.secret,
         expiresIn: this.config.auth.expiresIn
       });
-      // Expose auth middleware
       this.app.use(this.auth.initialize());
     }
     
-    // Static files
-    if (fs.existsSync(path.resolve(process.cwd(), this.config.staticDir!))) {
-      this.app.use(express.static(path.resolve(process.cwd(), this.config.staticDir!)));
+    // Static files - setup before other routes
+    const staticPath = path.resolve(process.cwd(), this.config.staticDir!);
+    if (fs.existsSync(staticPath)) {
+      this.app.use(express.static(staticPath));
     }
     
     // Setup API routes
@@ -103,6 +102,10 @@ export class Server {
     
     // Setup page routes (for SSR)
     this.setupPageRoutes();
+    
+    // Add error handlers at the end
+    this.app.use(notFoundHandler);
+    this.app.use(errorHandler);
   }
 
   private setupApiRoutes() {
@@ -176,19 +179,20 @@ export class Server {
   }
 
   private setupPageRoutes() {
-    if (!fs.existsSync(path.resolve(process.cwd(), this.config.pagesDir!))) {
+    const pagesPath = path.resolve(process.cwd(), this.config.pagesDir!);
+    if (!fs.existsSync(pagesPath)) {
       return;
     }
 
-    // Setup catch-all route for SSR
+    // Setup catch-all route for SSR - but only if pages directory exists
     this.app.get('*', async (req, res) => {
       try {
-        // Implement page routing logic
         const { html, statusCode } = await this.renderPage(req.path);
         res.status(statusCode || 200).send(html);
       } catch (error) {
         console.error('Error rendering page:', error);
-        res.status(500).send('Server Error');
+        const errorHtml = templates.generateErrorPage(500, 'Server Error');
+        res.status(500).send(errorHtml);
       }
     });
   }
