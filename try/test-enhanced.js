@@ -43,6 +43,7 @@ async function testEnhancedGoWasm() {
       debug: true,
       goWasmPath: wasmExecPath
     });
+    console.log('✅ WASM module functions!',wasmInstance.functions);
     
     console.log('🚀 WASM module loaded successfully!\n');
     

@@ -186,22 +186,17 @@ func reverseString(s string) string {
 
 // goDemo - Comprehensive demo function
 func goDemo(this js.Value, args []js.Value) interface{} {
-	// Create a map with simple values that can be safely converted
+	// Create a simple map that doesn't trigger js.ValueOf issues
 	demo := map[string]interface{}{
 		"message":     "Go WASM is working!",
 		"timestamp":   time.Now().Unix(),
 		"fibonacci10": 55,
 		"pi":          3.141592653589793,
 		"prime17":     true,
-		"features":    []string{
-			"Math calculations",
-			"String processing",
-			"Array manipulation",
-			"Performance benchmarking",
-		},
 	}
 
-	return demo // Return the map directly, not wrapped in js.ValueOf
+	// Return the map directly without wrapping
+	return demo
 }
 
 func main() {
