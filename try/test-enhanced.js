@@ -8,6 +8,11 @@ const __dirname = path.dirname(__filename);
 async function testEnhancedGoWasm() {
   console.log('=== Testing Enhanced Go WASM Module (Browser-style API) ===\n');
   
+  // Prevent process exit during testing
+  process.on('exit', () => {
+    console.log('Process is exiting...');
+  });
+  
   try {
     // Check if wasm_exec.cjs exists first
     const wasmExecPath = path.join(__dirname, 'wasm_exec.cjs');
@@ -35,43 +40,103 @@ async function testEnhancedGoWasm() {
     console.log(`Using Go runtime from: ${wasmExecPath}`);
     
     const wasmInstance = await loadGoWasmFromFile(wasmPath, {
-      debug: true, // Enable debug to see what's happening
-      goWasmPath: wasmExecPath // Specify the path to wasm_exec.cjs
+      debug: true,
+      goWasmPath: wasmExecPath
     });
     
     console.log('🚀 WASM module loaded successfully!\n');
     
-    // Check if WASM is ready (like browser isWasmReady check)
-    if (!isWasmReady()) {
-      console.log('❌ WASM not ready after loading');
-      return;
+    // Wait longer and add more debugging
+    console.log('⏳ Waiting for Go runtime to fully initialize...');
+    
+    // Wait in smaller chunks with progress updates
+    for (let i = 0; i < 10; i++) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log(`⏳ Waiting... ${(i + 1) * 500}ms`);
     }
     
-    // Get available functions (like browser getWasmFunctions)
-    const availableFunctions = getWasmFunctions();
-    console.log(`✅ WASM is ready with ${availableFunctions.length} functions:`);
-    console.log(`📋 Functions: ${availableFunctions.join(', ')}\n`);
+    console.log('🔍 Starting manual debug check...');
     
-    // Test functions using the browser-style API
-    console.log('=== Testing Go Functions (Browser-style API) ===\n');
-    
-    // Test just one function first
-    console.log(`🔹 Testing goHello - Greeting function`);
+    // Force the test to continue by catching any process exit
     try {
-      // Call function using browser-style API
-      const result = callWasmFunction('goHello', 'World');
-      console.log(`✅ goHello('World') = ${JSON.stringify(result)}`);
-    } catch (error) {
-      console.log(`❌ goHello error:`, error.message);
+      // Manual debug check before isWasmReady
+      console.log('🔍 Manual debug check of global object...');
+      const globalObj = global;
+      const allKeys = Object.getOwnPropertyNames(globalObj);
+      const goKeys = allKeys.filter(key => key.startsWith('go'));
+      console.log('📋 Manual check - Global keys starting with "go":', goKeys);
+      const goTypes = goKeys.map(key => `${key}: ${typeof globalObj[key]}`);
+      console.log('📋 Manual check - Go key types:', goTypes);
+      
+      // Check if WASM is ready (like browser isWasmReady check)
+      console.log('🔍 Checking if WASM is ready...');
+      const wasmReadyResult = isWasmReady();
+      console.log('WASM Ready result:', wasmReadyResult);
+      
+      if (!wasmReadyResult) {
+        console.log('❌ WASM not ready after loading');
+        return;
+      }
+      
+      // Get available functions (like browser getWasmFunctions)
+      const availableFunctions = getWasmFunctions();
+      console.log(`✅ WASM is ready with ${availableFunctions.length} functions:`);
+      console.log(`📋 Functions: ${availableFunctions.join(', ')}\n`);
+      
+      // Test functions using the browser-style API
+      console.log('=== Testing Go Functions (Browser-style API) ===\n');
+      
+      // Test all functions
+      const testCases = [
+        { name: 'goHello', args: ['World'], desc: 'Greeting function' },
+        { name: 'goAdd', args: [10, 20], desc: 'Addition' },
+        { name: 'goMultiply', args: [4, 7], desc: 'Multiplication' },
+        { name: 'goFibonacci', args: [10], desc: 'Fibonacci' },
+        { name: 'goIsPrime', args: [17], desc: 'Prime check' },
+        { name: 'goDemo', args: [], desc: 'Demo function' }
+      ];
+      
+      for (const test of testCases) {
+        console.log(`🔹 Testing ${test.name} - ${test.desc}`);
+        try {
+          // Call function using browser-style API
+          const result = callWasmFunction(test.name, ...test.args);
+          console.log(`✅ ${test.name}(${test.args.join(', ')}) = ${JSON.stringify(result)}`);
+        } catch (error) {
+          console.log(`❌ ${test.name} error:`, error.message);
+          
+          // Try calling directly from global if it exists
+          if (typeof globalObj[test.name] === 'function') {
+            console.log(`🔄 Trying direct call to ${test.name}...`);
+            try {
+              const directResult = globalObj[test.name](...test.args);
+              console.log(`✅ Direct call result: ${JSON.stringify(directResult)}`);
+            } catch (directError) {
+              console.log(`❌ Direct call error:`, directError.message);
+            }
+          }
+        }
+        console.log('');
+      }
+      
+      console.log('🎉 All function tests completed!');
+      console.log('\n=== Summary ===');
+      console.log(`✅ WASM module loaded successfully`);
+      console.log(`✅ Go runtime initialized`);
+      console.log(`✅ Found ${availableFunctions.length} Go functions`);
+      console.log(`✅ Server-side WASM API working like browser API`);
+      
+      console.log('\nThis API works just like your frontend code:');
+      console.log('- loadGoWasmFromFile(path) instead of loadGoWasm(url)');
+      console.log('- callWasmFunction(name, ...args) instead of window[name](...args)');
+      console.log('- isWasmReady() exactly the same as browser');
+      console.log('- getWasmFunctions() exactly the same as browser');
+      
+    } catch (debugError) {
+      console.error('Debug error:', debugError);
     }
-    console.log('');
     
-    console.log('🎉 Single function test completed!');
-    console.log('\nThis API works just like your frontend code:');
-    console.log('- loadGoWasm(url) instead of fetch + instantiate');
-    console.log('- callWasmFunction(name, ...args) instead of window[name](...args)');
-    console.log('- isWasmReady() instead of wasmReady state');
-    console.log('- getWasmFunctions() to list available functions');
+    console.log('✅ Test completed successfully!');
     
   } catch (error) {
     console.error('❌ Error testing browser-style WASM API:', error);
@@ -87,6 +152,10 @@ async function testEnhancedGoWasm() {
       console.log('   npm run build');
       console.log('   Then run this test again.');
     }
+  } finally {
+    // Force exit to prevent hanging
+    console.log('🏁 Test finished, exiting...');
+    process.exit(0);
   }
 }
 

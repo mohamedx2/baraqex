@@ -121,38 +121,63 @@ export async function loadGoWasmFromFile(
     const wasmBuffer = await fs.readFile(wasmFilePath);
     const wasmModule = await WebAssembly.compile(wasmBuffer);
     
-    // The standard wasm_exec.js provides imports under 'go' but some Go WASM modules expect 'gojs'
-    // Create imports object with both possible structures
+    // The updated wasm_exec.js provides imports under 'gojs' instead of 'go'
+    // Create imports object with the correct structure
     const baseImports = go.importObject;
     const finalImportObject = {
       ...baseImports,
-      // Add gojs mapping for compatibility
-      gojs: baseImports.go || {},
       ...options.importObject
     };
     
     if (options.debug) {
       console.log('[WASM] Available import modules:', Object.keys(finalImportObject));
-      console.log('[WASM] Go import functions:', Object.keys(finalImportObject.go || {}));
-      console.log('[WASM] Gojs import functions:', Object.keys(finalImportObject.gojs || {}));
+      
+      // Debug each module's functions
+      for (const [moduleName, moduleExports] of Object.entries(finalImportObject)) {
+        if (typeof moduleExports === 'object' && moduleExports !== null) {
+          const exportNames = Object.keys(moduleExports);
+          console.log(`[WASM] ${moduleName} import functions:`, exportNames);
+        }
+      }
     }
     
     // Instantiate the WASM module
     const instance = await WebAssembly.instantiate(wasmModule, finalImportObject);
     
-    // Initialize Go runtime (exactly like browser)
-    await go.run(instance);
+    if (options.debug) {
+      console.log('[WASM] WASM instance created, starting Go runtime...');
+    }
     
-    // Give Go runtime time to initialize and register functions (like browser version)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Initialize Go runtime - this will run the main function
+    // The go.run() method returns a promise that resolves when the program exits
+    const runPromise = go.run(instance);
     
-    // Extract exported functions from global scope (like browser version)
+    if (options.debug) {
+      console.log('[WASM] Go runtime started, waiting for initialization...');
+    }
+    
+    // Give Go runtime time to initialize and register functions
+    // Don't wait for the program to finish, just wait for functions to be registered
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    if (options.debug) {
+      console.log('[WASM] Scanning global object for Go functions...');
+    }
+    
+    // Extract exported functions from global scope
     const functions: Record<string, Function> = {};
-    
-    // Look for Go functions in global scope
     const globalObj = global as any;
-    for (const key in globalObj) {
-      if (typeof globalObj[key] === 'function' && key.startsWith('go')) {
+    
+    // Scan for Go functions
+    const allKeys = Object.getOwnPropertyNames(globalObj);
+    const goKeys = allKeys.filter(key => key.startsWith('go'));
+    
+    if (options.debug) {
+      console.log('[WASM] All keys starting with "go":', goKeys);
+    }
+    
+    for (const key of goKeys) {
+      if (typeof globalObj[key] === 'function') {
         functions[key] = globalObj[key];
         if (options.debug) {
           console.log(`[WASM] Found function: ${key}`);
@@ -174,7 +199,16 @@ export async function loadGoWasmFromFile(
     
     if (options.debug) {
       console.log(`[WASM] Module loaded successfully with ${Object.keys(functions).length} functions`);
+      console.log('[WASM] Final function list:', Object.keys(functions));
     }
+    
+    // Don't await the runPromise - let the Go program finish in the background
+    // The functions are already registered and available
+    runPromise.catch((error:any)=> {
+      if (options.debug) {
+        console.log('[WASM] Go program finished with error:', error);
+      }
+    });
     
     return wasmInstance;
   } catch (error) {

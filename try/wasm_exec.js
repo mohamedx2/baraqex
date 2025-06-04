@@ -2,51 +2,25 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+"use strict";
+
 (() => {
-	// Map multiple JavaScript environments to a single common API,
-	// preferring web standards over Node.js API.
-	//
-	// Environments considered:
-	// - Browsers
-	// - Node.js
-	// - Electron
-	// - Parcel
-	// - Webpack
-
-	if (typeof global !== "undefined") {
-		// global already exists
-	} else if (typeof window !== "undefined") {
-		window.global = window;
-	} else if (typeof self !== "undefined") {
-		self.global = self;
-	} else {
-		throw new Error("cannot export Go (neither global, window nor self is defined)");
-	}
-
-	if (!global.require && global.require !== require) {
-		global.require = require;
-	}
-
-	if (!global.fs && global.require) {
-		global.fs = require("fs");
-	}
-
 	const enosys = () => {
 		const err = new Error("not implemented");
 		err.code = "ENOSYS";
 		return err;
 	};
 
-	if (!global.fs) {
+	if (!globalThis.fs) {
 		let outputBuf = "";
-		global.fs = {
+		globalThis.fs = {
 			constants: { O_WRONLY: -1, O_RDWR: -1, O_CREAT: -1, O_TRUNC: -1, O_APPEND: -1, O_EXCL: -1 }, // unused
 			writeSync(fd, buf) {
 				outputBuf += decoder.decode(buf);
 				const nl = outputBuf.lastIndexOf("\n");
 				if (nl != -1) {
-					console.log(outputBuf.substr(0, nl));
-					outputBuf = outputBuf.substr(nl + 1);
+					console.log(outputBuf.substring(0, nl));
+					outputBuf = outputBuf.substring(nl + 1);
 				}
 				return buf.length;
 			},
@@ -84,8 +58,8 @@
 		};
 	}
 
-	if (!global.process) {
-		global.process = {
+	if (!globalThis.process) {
+		globalThis.process = {
 			getuid() { return -1; },
 			getgid() { return -1; },
 			geteuid() { return -1; },
@@ -99,45 +73,26 @@
 		}
 	}
 
-	if (!global.crypto && global.require) {
-		const nodeCrypto = require("crypto");
-		global.crypto = {
-			getRandomValues(b) {
-				nodeCrypto.randomFillSync(b);
-			},
-		};
-	}
-	if (!global.crypto) {
-		throw new Error("global.crypto is not available, polyfill required (getRandomValues only)");
+	if (!globalThis.crypto) {
+		throw new Error("globalThis.crypto is not available, polyfill required (crypto.getRandomValues only)");
 	}
 
-	if (!global.performance) {
-		global.performance = {
-			now() {
-				const [sec, nsec] = process.hrtime();
-				return sec * 1000 + nsec / 1000000;
-			},
-		};
+	if (!globalThis.performance) {
+		throw new Error("globalThis.performance is not available, polyfill required (performance.now only)");
 	}
 
-	if (!global.TextEncoder && global.require) {
-		global.TextEncoder = require("util").TextEncoder;
-	}
-	if (!global.TextEncoder) {
-		throw new Error("global.TextEncoder is not available, polyfill required");
+	if (!globalThis.TextEncoder) {
+		throw new Error("globalThis.TextEncoder is not available, polyfill required");
 	}
 
-	if (!global.TextDecoder && global.require) {
-		global.TextDecoder = require("util").TextDecoder;
-	}
-	if (!global.TextDecoder) {
-		throw new Error("global.TextDecoder is not available, polyfill required");
+	if (!globalThis.TextDecoder) {
+		throw new Error("globalThis.TextDecoder is not available, polyfill required");
 	}
 
 	const encoder = new TextEncoder("utf-8");
 	const decoder = new TextDecoder("utf-8");
 
-	global.Go = class {
+	globalThis.Go = class {
 		constructor() {
 			this.argv = ["js"];
 			this.env = {};
@@ -156,6 +111,10 @@
 			const setInt64 = (addr, v) => {
 				this.mem.setUint32(addr + 0, v, true);
 				this.mem.setUint32(addr + 4, Math.floor(v / 4294967296), true);
+			}
+
+			const setInt32 = (addr, v) => {
+				this.mem.setUint32(addr + 0, v, true);
 			}
 
 			const getInt64 = (addr) => {
@@ -246,12 +205,15 @@
 			const loadString = (addr) => {
 				const saddr = getInt64(addr + 0);
 				const len = getInt64(addr + 8);
-				return decoder.decode(new Uint8Array(this._inst.exports.mem.buffer, saddr, len));
+				return decoder.decode(new DataView(this._inst.exports.mem.buffer, saddr, len));
 			}
 
 			const timeOrigin = Date.now() - performance.now();
 			this.importObject = {
-				go: {
+				_gotest: {
+					add: (a, b) => a + b,
+				},
+				gojs: {
 					// Go's SP does not change as long as no Go code is running. Some operations (e.g. calls, getters and setters)
 					// may synchronously trigger a Go event handler. This makes Go code get executed in the middle of the imported
 					// function. A goroutine can switch to a new stack if the current stack is too small (see morestack function).
@@ -276,7 +238,7 @@
 						const fd = getInt64(sp + 8);
 						const p = getInt64(sp + 16);
 						const n = this.mem.getInt32(sp + 24, true);
-						global.fs.writeSync(fd, new Uint8Array(this._inst.exports.mem.buffer, p, n));
+						fs.writeSync(fd, new Uint8Array(this._inst.exports.mem.buffer, p, n));
 					},
 
 					// func resetMemoryDataView()
@@ -304,7 +266,6 @@
 						sp >>>= 0;
 						const id = this._nextCallbackTimeoutID;
 						this._nextCallbackTimeoutID++;
-						const delay = getInt64(sp + 8);
 						this._scheduledTimeouts.set(id, setTimeout(
 							() => {
 								this._resume();
@@ -315,7 +276,7 @@
 									this._resume();
 								}
 							},
-							delay + 1, // setTimeout has been seen to fire up to 1 millisecond early
+							getInt64(sp + 8),
 						));
 						this.mem.setInt32(sp + 16, id, true);
 					},
@@ -331,7 +292,7 @@
 					// func getRandomData(r []byte)
 					"runtime.getRandomData": (sp) => {
 						sp >>>= 0;
-						global.crypto.getRandomValues(loadSlice(sp + 8));
+						crypto.getRandomValues(loadSlice(sp + 8));
 					},
 
 					// func finalizeRef(v ref)
@@ -379,7 +340,7 @@
 						storeValue(sp + 24, Reflect.get(loadValue(sp + 8), getInt64(sp + 16)));
 					},
 
-					// func valueSetIndex(v ref, i int, x ref)
+					// valueSetIndex(v ref, i int, x ref)
 					"syscall/js.valueSetIndex": (sp) => {
 						sp >>>= 0;
 						Reflect.set(loadValue(sp + 8), getInt64(sp + 16), loadValue(sp + 24));
@@ -390,9 +351,9 @@
 						sp >>>= 0;
 						try {
 							const v = loadValue(sp + 8);
-							const m = loadString(sp + 16);
+							const m = Reflect.get(v, loadString(sp + 16));
 							const args = loadSliceOfValues(sp + 32);
-							const result = Reflect.apply(v[m], v, args);
+							const result = Reflect.apply(m, v, args);
 							sp = this._inst.exports.getsp() >>> 0; // see comment above
 							storeValue(sp + 56, result);
 							this.mem.setUint8(sp + 64, 1);
@@ -461,8 +422,7 @@
 					// func valueInstanceOf(v ref, t ref) bool
 					"syscall/js.valueInstanceOf": (sp) => {
 						sp >>>= 0;
-						const result = (loadValue(sp + 8) instanceof loadValue(sp + 16));
-						this.mem.setUint8(sp + 24, result ? 1 : 0);
+						this.mem.setUint8(sp + 24, (loadValue(sp + 8) instanceof loadValue(sp + 16)) ? 1 : 0);
 					},
 
 					// func copyBytesToGo(dst []byte, src ref) (int, bool)
@@ -514,7 +474,7 @@
 				null,
 				true,
 				false,
-				global,
+				globalThis,
 				this,
 			];
 			this._goRefCounts = new Array(this._values.length).fill(Infinity); // number of references that Go has to a JS value, indexed by reference id
@@ -523,7 +483,7 @@
 				[null, 2],
 				[true, 3],
 				[false, 4],
-				[global, 5],
+				[globalThis, 5],
 				[this, 6],
 			]);
 			this._idPool = [];   // unused ids that have been garbage collected
@@ -597,37 +557,5 @@
 				return event.result;
 			};
 		}
-	}
-
-	if (
-		typeof module !== "undefined" &&
-		global.require &&
-		global.require.main === module &&
-		global.process &&
-		global.process.versions &&
-		!global.process.versions.electron
-	) {
-		if (process.argv.length < 3) {
-			console.error("usage: go_js_wasm_exec [wasm binary] [arguments]");
-			process.exit(1);
-		}
-
-		const go = new Go();
-		go.argv = process.argv.slice(2);
-		go.env = Object.assign({ TMPDIR: require("os").tmpdir() }, process.env);
-		go.exit = process.exit;
-		WebAssembly.instantiate(fs.readFileSync(process.argv[2]), go.importObject).then((result) => {
-			process.on("exit", (code) => { // Node.js exits if no event handler is pending
-				if (code === 0 && !go.exited) {
-					// deadlock, make Go print error and exit
-					go._pendingEvent = { id: 0 };
-					go._resume();
-				}
-			});
-			return go.run(result.instance);
-		}).catch((err) => {
-			console.error(err);
-			process.exit(1);
-		});
 	}
 })();
