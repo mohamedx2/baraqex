@@ -68,7 +68,8 @@ export function generateDocument(
     if (src.startsWith('<script')) {
       return src; // Allow inline scripts
     }
-    return `<script src="${escapeHtml(src)}" ${src.endsWith('.js') ? 'type="module"' : ''} defer></script>`;
+    // Don't add type="module" to avoid ES6 import issues
+    return `<script src="${escapeHtml(src)}" defer></script>`;
   });
   
   // Generate style tags

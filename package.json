@@ -1,6 +1,6 @@
 {
   "name": "baraqex",
-  "version": "1.0.20",
+  "version": "1.0.23",
   "description": "A wrapper package for frontend-hamroun framework",
   "type": "module",
   "main": "dist/index.js",
@@ -66,5 +66,19 @@
   ],
   "bin": {
     "baraqex": "./bin/baraqex.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./server": {
+      "import": "./dist/server/index.js",
+      "require": "./dist/server/index.cjs"
+    },
+    "./wasm": {
+      "import": "./dist/wasm.js",
+      "require": "./dist/wasm.cjs"
+    }
   }
 }

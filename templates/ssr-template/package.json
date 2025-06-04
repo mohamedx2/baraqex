@@ -1,0 +1,22 @@
+{
+  "name": "baraqex-ssr-template",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Server-side rendered Baraqex application",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "echo 'Building server...'",
+    "build:client": "echo 'Building client...'",
+    "start": "NODE_ENV=production node server.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "baraqex": "^1.0.0",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

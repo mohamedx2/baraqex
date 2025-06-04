@@ -1,0 +1,20 @@
+{
+  "name": "baraqex-basic-app",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Basic Baraqex application",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "npm run build:client",
+    "build:client": "echo 'Building client...'",
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "baraqex": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
