@@ -422,6 +422,19 @@ await loadGoWasmFromFile('./app.wasm', {
 
 ## 🧪 Testing
 
+### Complete Test Suite
+
+```bash
+# Run all tests (builds project first)
+npm test
+
+# Run server function tests only
+npm run test:server
+
+# Run WASM integration tests only
+npm run test:wasm
+```
+
 ### WASM Testing
 
 ```javascript
@@ -463,6 +476,17 @@ describe('API Routes', () => {
   });
 });
 ```
+
+### Test Results
+
+The test suite covers:
+- ✅ **Server Creation** - Basic server setup and configuration
+- ✅ **Database Connections** - MongoDB, MySQL, PostgreSQL adapters
+- ✅ **Authentication** - JWT token generation and validation
+- ✅ **WebAssembly Integration** - Go WASM loading and function calls
+- ✅ **API Routes** - Dynamic route registration and handling
+- ✅ **Server Utilities** - Helper functions and middleware
+- ✅ **Template Generation** - HTML document and error page creation
 
 ## 🚀 Deployment
 

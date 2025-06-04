@@ -14,7 +14,7 @@ import { requestLogger, errorHandler, notFoundHandler, rateLimit } from './middl
 // Import the utility functions
 import * as utils from './utils.js';
 import * as templates from './templates.js';
-import { initNodeWasm, loadGoWasmFromFile } from './wasm.js';
+import { initNodeWasm, loadGoWasmFromFile, callWasmFunction, isWasmReady, getWasmFunctions } from './wasm.js';
 
 // Helper function to get the component name from the file path
 function getComponentName(filePath: string, pagesDir: string): string {
@@ -514,7 +514,7 @@ export const renderComponent = async (Component: any, props: any = {}) => {
 };
 
 // Export WASM utilities for server-side usage
-export { initNodeWasm, loadGoWasmFromFile } from './wasm.js';
+export { initNodeWasm, loadGoWasmFromFile, callWasmFunction, isWasmReady, getWasmFunctions } from './wasm.js';
 
 // Import and export server utilities
 export * from './utils.js';
@@ -545,6 +545,9 @@ export default {
   errorHandler,
   notFoundHandler,
   loadGoWasmFromFile,
+  callWasmFunction,  // Add this missing export
+  isWasmReady,
+  getWasmFunctions,
   // Template utilities
   templates,
   // Server utilities

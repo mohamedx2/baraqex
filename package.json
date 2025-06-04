@@ -10,9 +10,12 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "test": "jest",
+    "test": "npm run build && node test-server.js",
+    "test:server": "node test-server.js",
+    "test:wasm": "node try/test-enhanced.js",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "cli": "node ./bin/baraqex.js"
   },
   "keywords": [
     "frontend",
@@ -45,9 +48,23 @@
     "jest": "^29.5.0",
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.12",
+    "chalk": "^5.3.0",
+    "gradient-string": "^2.0.2",
+    "nanospinner": "^1.1.0",
+    "fs-extra": "^11.1.1",
+    "boxen": "^7.1.1",
+    "terminal-link": "^3.0.0",
+    "update-notifier": "^7.0.0",
+    "ora": "^7.0.1",
+    "figlet": "^1.7.0"
   },
   "files": [
     "dist/**/*"
-  ]
+  ],
+  "bin": {
+    "baraqex": "./bin/baraqex.js"
+  }
 }

@@ -2,6 +2,7 @@ import express, { Router, Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { AuthService } from './auth.js';
+import { pathToFileURL } from 'url';
 
 interface RouteHandler {
   (req: Request, res: Response, next?: NextFunction): void | Promise<void>;
@@ -83,29 +84,68 @@ export class ApiRouter {
 
   private async registerRoute(filePath: string, routePath: string) {
     try {
-      // Dynamic import the route file
-      const routeModule = await import(filePath);
+      // Ensure we have an absolute path and normalize it
+      const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(filePath);
       
-      if (!this.isValidRouteModule(routeModule)) {
-        console.warn(`Invalid route module: ${filePath}`);
-        return;
-      }
+      // Convert to proper file:// URL for Windows
+      const fileUrl = pathToFileURL(absolutePath).href;
       
-      console.log(`Registering API route: ${routePath}`);
-      
-      // Register middleware if any
-      const middleware = routeModule.middleware || [];
-      
-      // Register HTTP methods
-      for (const method of ['get', 'post', 'put', 'delete', 'patch', 'options']) {
-        const handler = routeModule[method];
-        if (typeof handler === 'function') {
-          const routerMethod = this.router[method as keyof Router] as any;
-          routerMethod(
-            routePath, 
-            ...middleware,
-            this.wrapHandler(handler)
-          );
+      if (process.platform === 'win32') {
+        // Add timestamp to force reload on Windows
+        const urlWithTimestamp = `${fileUrl}?t=${Date.now()}`;
+        
+        // Dynamic import the route file
+        const routeModule = await import(urlWithTimestamp);
+        
+        if (!this.isValidRouteModule(routeModule)) {
+          console.warn(`Invalid route module: ${filePath}`);
+          return;
+        }
+        
+        console.log(`Registering API route: ${routePath}`);
+        
+        // Register middleware if any
+        const middleware = routeModule.middleware || [];
+        
+        // Register HTTP methods
+        for (const method of ['get', 'post', 'put', 'delete', 'patch', 'options']) {
+          const handler = routeModule[method];
+          if (typeof handler === 'function') {
+            const routerMethod = this.router[method as keyof Router] as any;
+            routerMethod.call(
+              this.router,
+              routePath, 
+              ...middleware,
+              this.wrapHandler(handler)
+            );
+          }
+        }
+      } else {
+        // Non-Windows platforms
+        const routeModule = await import(fileUrl);
+        
+        if (!this.isValidRouteModule(routeModule)) {
+          console.warn(`Invalid route module: ${filePath}`);
+          return;
+        }
+        
+        console.log(`Registering API route: ${routePath}`);
+        
+        // Register middleware if any
+        const middleware = routeModule.middleware || [];
+        
+        // Register HTTP methods
+        for (const method of ['get', 'post', 'put', 'delete', 'patch', 'options']) {
+          const handler = routeModule[method];
+          if (typeof handler === 'function') {
+            const routerMethod = this.router[method as keyof Router] as any;
+            routerMethod.call(
+              this.router,
+              routePath, 
+              ...middleware,
+              this.wrapHandler(handler)
+            );
+          }
         }
       }
     } catch (error) {
