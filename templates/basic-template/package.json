@@ -1,0 +1,13 @@
+{
+  "name": "basic-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "frontend-hamroun": "latest",
+    "express": "^4.18.2"
+  }
+}

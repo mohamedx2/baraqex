@@ -5,7 +5,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import { GoWasmInstance, GoWasmOptions } from '../wasm.js';
+import { GoWasmInstance, GoWasmOptions } from '../server/types.js';
 
 // Global flag to ensure we only initialize WASM once
 let initialized = false;
@@ -253,7 +253,7 @@ export function getWasmFunctions(): string[] {
 declare global {
   var Go: new () => {
     importObject: any;
-    run: (instance: WebAssembly.Instance) => void;
+    run: (instance: WebAssembly.Instance) => Promise<void>;
   };
 }
 

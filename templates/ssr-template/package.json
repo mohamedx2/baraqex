@@ -1,22 +1,22 @@
 {
-  "name": "baraqex-ssr-template",
-  "version": "1.0.0",
+  "name": "ssr-version",
+  "private": true,
+  "version": "0.0.0",
   "type": "module",
-  "description": "Server-side rendered Baraqex application",
-  "main": "server.js",
   "scripts": {
-    "dev": "node server.js",
-    "build": "npm run build:server && npm run build:client",
-    "build:server": "echo 'Building server...'",
-    "build:client": "echo 'Building client...'",
-    "start": "NODE_ENV=production node server.js",
-    "test": "node test.js"
+    "build:client": "esbuild src/client.tsx --bundle --outfile=dist/client.js --platform=browser --format=esm",
+    "build:server": "esbuild src/server.ts --bundle --outfile=dist/server.js --platform=node --format=esm --external:frontend-hamroun --packages=external",
+    "build": "node esbuild.config.js",
+    "start": "node dist/server.js"
   },
   "dependencies": {
-    "baraqex": "^1.0.0",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "frontend-hamroun": "latest"
   },
   "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.5.0",
+    "esbuild": "^0.19.12",
     "typescript": "^5.0.0"
   }
 }

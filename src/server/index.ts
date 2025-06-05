@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import fs from 'fs';
 import cors from 'cors';
 import { SignOptions } from 'jsonwebtoken';
-// Fix the import - use a simple renderToString function instead
+import { build } from 'esbuild';
 import { Database } from './database.js';
 import { AuthService } from './auth.js';
 import { ApiRouter } from './api-router.js';
@@ -17,14 +17,93 @@ import * as templates from './templates.js';
 import { initNodeWasm, loadGoWasmFromFile, callWasmFunction, isWasmReady, getWasmFunctions } from './wasm.js';
 
 // Simple renderToString function for server-side rendering
-function renderToString(content: any): Promise<string> {
-  if (typeof content === 'string') {
-    return Promise.resolve(content);
+import { renderToString } from 'frontend-hamroun';
+
+// Cache for compiled JSX files
+const jsxCache = new Map<string, { code: string; mtime: number }>();
+
+// Helper function to compile JSX/TSX files using esbuild
+async function compileJsxFile(filePath: string): Promise<string> {
+  const stats = fs.statSync(filePath);
+  const mtime = stats.mtimeMs;
+  
+  // Check cache first
+  const cached = jsxCache.get(filePath);
+  if (cached && cached.mtime === mtime) {
+    return cached.code;
   }
-  if (typeof content === 'function') {
-    return Promise.resolve(content());
+  
+  try {
+    // Use esbuild to compile JSX/TSX to JavaScript
+    const result = await build({
+      entryPoints: [filePath],
+      bundle: false,
+      write: false,
+      format: 'esm',
+      target: 'node18',
+      jsx: 'transform',
+      jsxFactory: 'jsx',
+      jsxFragment: 'Fragment',
+      loader: {
+        '.jsx': 'jsx',
+        '.tsx': 'tsx',
+        '.js': 'js',
+        '.ts': 'ts'
+      },
+      define: {
+        'process.env.NODE_ENV': '"development"'
+      },
+      platform: 'node',
+      external: ['frontend-hamroun'], // Don't bundle frontend-hamroun
+      banner: {
+        js: 'import { jsx, Fragment } from "frontend-hamroun";'
+      }
+    });
+    
+    if (result.outputFiles && result.outputFiles.length > 0) {
+      let code = result.outputFiles[0].text;
+      
+      // Cache the compiled code
+      jsxCache.set(filePath, { code, mtime });
+      
+      return code;
+    } else {
+      throw new Error('No output from esbuild compilation');
+    }
+  } catch (error) {
+    console.error(`Error compiling JSX file ${filePath}:`, error);
+    throw error;
   }
-  return Promise.resolve(String(content));
+}
+
+// Helper function to load and execute compiled JSX module
+async function loadJsxModule(filePath: string): Promise<any> {
+  const compiledCode = await compileJsxFile(filePath);
+  
+  // Create a temporary file with compiled code
+  const tempDir = path.join(process.cwd(), '.baraqex', 'temp');
+  await fs.promises.mkdir(tempDir, { recursive: true });
+  
+  const tempFile = path.join(tempDir, `${path.basename(filePath, path.extname(filePath))}_${Date.now()}.mjs`);
+  await fs.promises.writeFile(tempFile, compiledCode);
+  
+  try {
+    // Import the compiled module with dynamic timestamp to avoid caching
+    const fileUrl = pathToFileURL(tempFile).href;
+    const moduleUrl = `${fileUrl}?t=${Date.now()}`;
+    const module = await import(moduleUrl);
+    
+    // Clean up temp file after successful import
+    setTimeout(() => {
+      fs.promises.unlink(tempFile).catch(() => {});
+    }, 1000);
+    
+    return module;
+  } catch (error) {
+    // Clean up temp file on error
+    await fs.promises.unlink(tempFile).catch(() => {});
+    throw error;
+  }
 }
 
 // Helper function to get the component name from the file path
@@ -230,20 +309,19 @@ export class Server {
         normalizedPath = '/index';
       }
       
-      // Try to find a matching page file - prioritize .js files over .jsx for ESM compatibility
+      // Try to find a matching page file - prioritize JSX/TSX files
       let pagePath = '';
       const possiblePaths = [
+        path.join(pagesDir, `${normalizedPath}.jsx`),
+        path.join(pagesDir, `${normalizedPath}.tsx`),
         path.join(pagesDir, `${normalizedPath}.js`),
         path.join(pagesDir, `${normalizedPath}.mjs`),
         path.join(pagesDir, `${normalizedPath}.ts`),
+        path.join(pagesDir, `${normalizedPath}/index.jsx`),
+        path.join(pagesDir, `${normalizedPath}/index.tsx`),
         path.join(pagesDir, `${normalizedPath}/index.js`),
         path.join(pagesDir, `${normalizedPath}/index.mjs`),
-        path.join(pagesDir, `${normalizedPath}/index.ts`),
-        // JSX files as fallback (will need special handling)
-        path.join(pagesDir, `${normalizedPath}.jsx`),
-        path.join(pagesDir, `${normalizedPath}.tsx`),
-        path.join(pagesDir, `${normalizedPath}/index.jsx`),
-        path.join(pagesDir, `${normalizedPath}/index.tsx`)
+        path.join(pagesDir, `${normalizedPath}/index.ts`)
       ];
       
       for (const p of possiblePaths) {
@@ -261,37 +339,39 @@ export class Server {
         };
       }
       
-      // Check if it's a JSX/TSX file and handle accordingly
-      if (pagePath.endsWith('.jsx') || pagePath.endsWith('.tsx')) {
-        return { 
-          html: templates.generateErrorPage(500, 'JSX/TSX files are not supported in server-side rendering. Please use .js or .ts files instead.'), 
-          statusCode: 500 
-        };
-      }
-      
       // Import and render the page component
       try {
-        // Convert to proper file:// URL for all platforms
-        const absolutePath = path.resolve(pagePath);
-        const fileUrl = pathToFileURL(absolutePath).href;
+        let pageModule: any;
         
-        // Add timestamp to force reload and avoid caching issues
-        const urlWithTimestamp = `${fileUrl}?t=${Date.now()}`;
+        // Always use esbuild compilation for JSX/TSX files
+        if (pagePath.endsWith('.jsx') || pagePath.endsWith('.tsx')) {
+          pageModule = await loadJsxModule(pagePath);
+        } else {
+          // For regular JS/TS files, try direct import first
+          try {
+            const absolutePath = path.resolve(pagePath);
+            const fileUrl = pathToFileURL(absolutePath).href;
+            const urlWithTimestamp = `${fileUrl}?t=${Date.now()}`;
+            pageModule = await import(urlWithTimestamp);
+          } catch (importError) {
+            // If direct import fails, try compiling with esbuild
+            console.log(`Direct import failed for ${pagePath}, trying esbuild compilation...`);
+            pageModule = await loadJsxModule(pagePath);
+          }
+        }
         
-        const pageModule = await import(urlWithTimestamp);
         if (!pageModule || !pageModule.default) {
           throw new Error(`No default export found in ${pagePath}`);
         }
         
         const PageComponent = pageModule.default;
         const initialProps = {
-          // Provide any initial props here
           path: normalizedPath,
-          query: {}, // Could be parsed from URL
+          query: {},
           api: { serverTime: new Date().toISOString() }
         };
         
-        // Render the component to HTML
+        // Render the component to HTML using frontend-hamroun
         const { html, success, error } = await renderComponent(PageComponent, initialProps);
         
         if (!success) {
@@ -303,44 +383,45 @@ export class Server {
         
         // Check if the returned HTML is already a complete document
         if (html.trim().startsWith('<!DOCTYPE html>') || html.trim().startsWith('<html')) {
-          // Return the complete HTML document as-is
           return { html, statusCode: 200 };
         }
         
-        // Generate the full HTML document only if it's not complete
-        let pageTitle = 'My App';
+        // Extract metadata from component
+        let pageTitle = 'Baraqex App';
+        let pageDescription = '';
+        let pageMeta = {};
+        
         try {
-          // Try to extract title from component if it has a getTitle method
           if (typeof PageComponent.getTitle === 'function') {
             pageTitle = PageComponent.getTitle(initialProps);
           } else if (PageComponent.title) {
             pageTitle = PageComponent.title;
           }
+          
+          if (typeof PageComponent.getDescription === 'function') {
+            pageDescription = PageComponent.getDescription(initialProps);
+          } else if (PageComponent.description) {
+            pageDescription = PageComponent.description;
+          }
+          
+          if (typeof PageComponent.getMeta === 'function') {
+            pageMeta = PageComponent.getMeta(initialProps);
+          }
         } catch (e) {
-          // Ignore title errors
+          // Ignore metadata extraction errors
         }
         
         // Parse the component name for hydration
         const componentName = getComponentName(pagePath, pagesDir);
         
-        // Generate full HTML document with our template
+        // Generate full HTML document with hydration support
         const fullHtml = templates.generateDocument(html, {
           title: pageTitle,
-          // Get description from component if available
-          description: typeof PageComponent.getDescription === 'function' 
-            ? PageComponent.getDescription(initialProps) 
-            : (PageComponent.description || ''),
-          // Add scripts for client-side hydration
-          scripts: ['/client.js'],
-          // Add any custom meta tags
-          meta: typeof PageComponent.getMeta === 'function'
-            ? PageComponent.getMeta(initialProps)
-            : {},
-          // Add custom styles
-          styles: ['/fullstack-styles.css'],
-          // Add initial data for client-side hydration
+          description: pageDescription,
+          scripts: ['/client.js'], // Client-side hydration script
+          styles: ['/styles.css'], // Add styles
+          meta: pageMeta,
           initialData: initialProps,
-          // Add component information for hydration
           componentName: componentName
         });
         
@@ -408,98 +489,216 @@ export class Server {
     
     // Set up client-side JS for hydration if needed
     if (options.hydratable) {
-      const staticDir = path.resolve(process.cwd(), this.config.staticDir!);
-      if (!fs.existsSync(staticDir)) {
-        fs.mkdirSync(staticDir, { recursive: true });
-      }
-      
-      // Generate or copy client hydration script
-      const clientJsPath = path.join(staticDir, 'client.js');
-      if (!fs.existsSync(clientJsPath)) {
-        const clientJsContent = `
-// Simple client-side script for Baraqex (no ES6 imports)
-console.log('🚀 Baraqex client-side script loaded');
-
-// Add interactive functionality
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('📱 Client-side hydration starting...');
+      this.setupClientHydration();
+    }
+  }
   
-  // Add smooth scrolling to anchor links
-  const anchors = document.querySelectorAll('a[href^="#"]');
-  anchors.forEach(function(anchor) {
-    anchor.addEventListener('click', function(e) {
-      e.preventDefault();
-      const target = document.querySelector(this.getAttribute('href'));
-      if (target) {
-        target.scrollIntoView({
-          behavior: 'smooth'
-        });
-      }
-    });
-  });
+  private setupClientHydration(): void {
+    const staticDir = path.resolve(process.cwd(), this.config.staticDir!);
+    if (!fs.existsSync(staticDir)) {
+      fs.mkdirSync(staticDir, { recursive: true });
+    }
+    
+    // Generate client hydration script with esbuild
+    const clientJsPath = path.join(staticDir, 'client.js');
+    if (!fs.existsSync(clientJsPath)) {
+      this.generateClientScript(clientJsPath);
+    }
+    
+    // Generate basic styles
+    const stylesPath = path.join(staticDir, 'styles.css');
+    if (!fs.existsSync(stylesPath)) {
+      this.generateBasicStyles(stylesPath);
+    }
+  }
   
-  // Add form enhancements
-  const forms = document.querySelectorAll('form');
-  forms.forEach(function(form) {
-    form.addEventListener('submit', function(e) {
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn && !submitBtn.disabled) {
-        // Add loading state
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Loading...';
-        
-        // Reset button after a delay if form doesn't handle it
-        setTimeout(function() {
-          if (submitBtn.disabled) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
-          }
-        }, 5000);
-      }
-    });
-  });
-  
-  console.log('✅ Client-side hydration complete');
-});
+  private generateClientScript(clientJsPath: string): void {
+    const clientJsContent = `
+import { hydrate, jsx } from 'frontend-hamroun';
 
-// Global error handler
-window.addEventListener('error', function(e) {
-  console.error('🚨 Client error:', e.error);
-});
-
-// Handle API requests with better error handling
-window.apiRequest = async function(url, options) {
-  options = options || {};
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🔄 Starting client-side hydration...');
   
   try {
-    const token = localStorage.getItem('token');
-    const headers = Object.assign({
-      'Content-Type': 'application/json'
-    }, options.headers || {});
+    // Find SSR content and hydrate it
+    const ssrRoots = document.querySelectorAll('[data-ssr-root]');
     
-    if (token) {
-      headers.Authorization = 'Bearer ' + token;
-    }
-    
-    const response = await fetch(url, Object.assign({}, options, {
-      headers: headers
-    }));
-    
-    if (!response.ok) {
-      throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('API request failed:', error);
-    throw error;
-  }
-};
-        `;
-        fs.writeFileSync(clientJsPath, clientJsContent);
+    for (const root of ssrRoots) {
+      const componentPath = root.getAttribute('data-component');
+      const initialDataElement = document.getElementById('__APP_DATA__');
+      
+      let initialData = {};
+      if (initialDataElement) {
+        try {
+          initialData = JSON.parse(initialDataElement.textContent || '{}');
+        } catch (e) {
+          console.warn('Failed to parse initial data:', e);
+        }
+      }
+      
+      if (componentPath) {
+        try {
+          // Import the component module
+          const module = await import(componentPath);
+          const Component = module.default;
+          
+          if (Component) {
+            // Create component element and hydrate
+            const componentElement = jsx(Component, initialData);
+            hydrate(componentElement, root);
+            console.log('✅ Hydrated:', componentPath);
+          }
+        } catch (error) {
+          console.error('❌ Failed to hydrate component:', componentPath, error);
+          // Continue with other components
+        }
       }
     }
+    
+    console.log('🎉 Client-side hydration complete!');
+  } catch (error) {
+    console.error('❌ Hydration failed:', error);
+  }
+});
+
+// Enhanced error handling
+window.addEventListener('error', (event) => {
+  console.error('🚨 Runtime Error:', event.error);
+});
+
+// Console welcome message
+console.log('%c🚀 Baraqex Client', 'color: #3498db; font-size: 24px; font-weight: bold;');
+console.log('%cSSR ✓ Hydration ✓ JSX ✓', 'color: #27ae60; font-size: 14px;');
+`;
+    
+    fs.writeFileSync(clientJsPath, clientJsContent);
+  }
+  
+  private generateBasicStyles(stylesPath: string): void {
+    const stylesContent = `
+/* Baraqex Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background: #f8f9fa;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .grid-responsive {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .flex-responsive {
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+  
+  .padding-responsive {
+    padding: 1rem !important;
+  }
+}
+
+/* Smooth transitions */
+* {
+  transition: all 0.2s ease;
+}
+
+/* Button styles */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Input styles */
+input, textarea, select {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.5rem;
+  font-size: 1rem;
+  width: 100%;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Loading states */
+.loading {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Card styles */
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+
+/* Utility classes */
+.text-center { text-align: center; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.p-1 { padding: 0.5rem; }
+.p-2 { padding: 1rem; }
+.p-3 { padding: 1.5rem; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+`;
+    
+    fs.writeFileSync(stylesPath, stylesContent);
   }
 
   public registerPlugin(plugin: (server: Server) => void): void {
@@ -592,10 +791,9 @@ export function parseCookies(req: Request): Record<string, string> {
   return cookies;
 }
 
-// Fix the renderComponent function
+// Fix the renderComponent function to work better with JSX
 export const renderComponent = async (Component: any, props: any = {}) => {
   try {
-    // Handle different component types
     let result: any;
     
     if (typeof Component === 'function') {
@@ -605,16 +803,32 @@ export const renderComponent = async (Component: any, props: any = {}) => {
       result = Component;
     }
     
-    // Create HTML string from component
-    const html = await renderToString(result);
-    return {
-      html,
-      success: true
-    };
+    // Handle different result types
+    if (typeof result === 'string') {
+      // If it's already a string, return it
+      return {
+        html: result,
+        success: true
+      };
+    } else if (result && typeof result === 'object') {
+      // If it's a JSX element or object, render it to string
+      const html = await renderToString(result);
+      return {
+        html,
+        success: true
+      };
+    } else {
+      // Convert to string as fallback
+      const html = String(result);
+      return {
+        html,
+        success: true
+      };
+    }
   } catch (error) {
     console.error('Error rendering component:', error);
     return {
-      html: `<div class="error">Error rendering component</div>`,
+      html: `<div class="error">Error rendering component: ${error instanceof Error ? error.message : 'Unknown error'}</div>`,
       success: false,
       error
     };

@@ -38,7 +38,7 @@ export function rateLimit(options: { windowMs: number; max: number }) {
   const requests = new Map<string, number[]>();
   
   return (req: Request, res: Response, next: NextFunction) => {
-    const ip = req.ip || 'unknown';
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
     const now = Date.now();
     
     // Get existing requests and filter out old ones

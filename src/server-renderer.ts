@@ -27,14 +27,3 @@ export function renderToString(component: any): string {
   }
 }
 
-export function hydrate(component: any, container: Element): void {
-  // Basic hydration - this would be more complex in a real implementation
-  if (container && typeof component === 'function') {
-    try {
-      const html = renderToString(component);
-      container.innerHTML = html;
-    } catch (error) {
-      console.error('Error in hydrate:', error);
-    }
-  }
-}

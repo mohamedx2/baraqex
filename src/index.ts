@@ -25,7 +25,7 @@ export {
 export type { ServerConfig, User, DbConfig, MiddlewareFunction } from './server/types.js';
 
 // Export server-renderer functions
-export { renderToString as baraqexRenderToString, hydrate as baraqexHydrate } from './server-renderer.js';
+export { renderToString as baraqexRenderToString } from './server-renderer.js';
 
 // Export middleware functions
 export { requestLogger, errorHandler, notFoundHandler, rateLimit } from './server/middleware.js';
