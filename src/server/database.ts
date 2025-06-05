@@ -1,7 +1,3 @@
-import { MongoClient, Db } from 'mongodb';
-import mysql from 'mysql2/promise';
-import pg from 'pg';
-
 export interface DbConfig {
   url: string;
   type: 'mongodb' | 'mysql' | 'postgres';
@@ -9,10 +5,10 @@ export interface DbConfig {
 
 export class Database {
   private config: DbConfig;
-  private mongoClient: MongoClient | null = null;
-  private mongoDb: Db | null = null;
-  private mysqlPool: mysql.Pool | null = null;
-  private pgPool: pg.Pool | null = null;
+  private mongoClient: any = null;
+  private mongoDb: any = null;
+  private mysqlPool: any = null;
+  private pgPool: any = null;
 
   constructor(config: DbConfig) {
     this.config = config;
@@ -36,11 +32,15 @@ export class Database {
 
   private async connectMongo(): Promise<void> {
     try {
+      const { MongoClient } = await import('mongodb');
       this.mongoClient = new MongoClient(this.config.url);
       await this.mongoClient.connect();
       this.mongoDb = this.mongoClient.db();
       console.log('Connected to MongoDB');
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'MODULE_NOT_FOUND') {
+        throw new Error('MongoDB driver not installed. Run: npm install mongodb');
+      }
       console.error('MongoDB connection error:', error);
       throw error;
     }
@@ -48,11 +48,15 @@ export class Database {
 
   private async connectMysql(): Promise<void> {
     try {
+      const mysql = await import('mysql2/promise');
       this.mysqlPool = mysql.createPool(this.config.url);
       // Test connection
       await this.mysqlPool.getConnection();
       console.log('Connected to MySQL');
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'MODULE_NOT_FOUND') {
+        throw new Error('MySQL driver not installed. Run: npm install mysql2');
+      }
       console.error('MySQL connection error:', error);
       throw error;
     }
@@ -60,12 +64,16 @@ export class Database {
 
   private async connectPostgres(): Promise<void> {
     try {
+      const pg = await import('pg');
       this.pgPool = new pg.Pool({ connectionString: this.config.url });
       // Test connection
       const client = await this.pgPool.connect();
       client.release();
       console.log('Connected to PostgreSQL');
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'MODULE_NOT_FOUND') {
+        throw new Error('PostgreSQL driver not installed. Run: npm install pg @types/pg');
+      }
       console.error('PostgreSQL connection error:', error);
       throw error;
     }
@@ -90,15 +98,15 @@ export class Database {
   }
 
   // Database-specific methods
-  getMongoDb(): Db | null {
+  getMongoDb(): any {
     return this.mongoDb;
   }
 
-  getMysqlPool(): mysql.Pool | null {
+  getMysqlPool(): any {
     return this.mysqlPool;
   }
 
-  getPgPool(): pg.Pool | null {
+  getPgPool(): any {
     return this.pgPool;
   }
 

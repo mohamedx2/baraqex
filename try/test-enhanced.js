@@ -5,45 +5,81 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Browser compatibility check
+function isBrowser() {
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
+}
+
+// Polyfill for browser environment
+if (isBrowser() && !window.crypto) {
+  window.crypto = {
+    getRandomValues: function(arr) {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256);
+      }
+      return arr;
+    }
+  };
+}
+
 async function testEnhancedGoWasm() {
   console.log('=== Testing Enhanced Go WASM Module (Browser-style API) ===\n');
   
-  // Prevent process exit during testing
-  process.on('exit', () => {
-    console.log('Process is exiting...');
-  });
+  // Check environment
+  if (isBrowser()) {
+    console.log('Running in browser environment');
+  } else {
+    console.log('Running in Node.js environment');
+    
+    // Prevent process exit during testing
+    process.on('exit', () => {
+      console.log('Process is exiting...');
+    });
+  }
   
   try {
-    // Check if wasm_exec.cjs exists first
-    const wasmExecPath = path.join(__dirname, 'wasm_exec.cjs');
-    console.log(`Checking for wasm_exec.cjs at: ${wasmExecPath}`);
-    
-    try {
-      const stats = fs.statSync(wasmExecPath);
-      console.log(`✅ wasm_exec.cjs found! Size: ${stats.size} bytes`);
-    } catch (error) {
-      console.error(`❌ wasm_exec.cjs not found at: ${wasmExecPath}`);
-      console.log('Current directory contents:');
-      const files = fs.readdirSync(__dirname);
-      files.forEach(file => console.log(`  - ${file}`));
-      return;
+    // Check if wasm_exec.cjs exists first (Node.js only)
+    if (!isBrowser()) {
+      const wasmExecPath = path.join(__dirname, 'wasm_exec.cjs');
+      console.log(`Checking for wasm_exec.cjs at: ${wasmExecPath}`);
+      
+      try {
+        const stats = fs.statSync(wasmExecPath);
+        console.log(`✅ wasm_exec.cjs found! Size: ${stats.size} bytes`);
+      } catch (error) {
+        console.error(`❌ wasm_exec.cjs not found at: ${wasmExecPath}`);
+        console.log('Current directory contents:');
+        const files = fs.readdirSync(__dirname);
+        files.forEach(file => console.log(`  - ${file}`));
+        return;
+      }
     }
 
     // Import the compiled WASM loader from dist folder
-    const { loadGoWasmFromFile, callWasmFunction, isWasmReady, getWasmFunctions } = 
-      await import('../dist/server/wasm.js');
+    let wasmModule;
+    if (isBrowser()) {
+      // Browser import
+      wasmModule = await import('../dist/wasm.js');
+    } else {
+      // Node.js import
+      wasmModule = await import('../dist/server/wasm.js');
+    }
+    
+    const { loadGoWasmFromFile, callWasmFunction, isWasmReady, getWasmFunctions } = wasmModule;
     
     // Load the WASM module (like browser fetch + instantiate)
-    const wasmPath = path.join(__dirname, 'example.wasm');
+    const wasmPath = isBrowser() ? './example.wasm' : path.join(__dirname, 'example.wasm');
     
     console.log(`Loading WASM from: ${wasmPath}`);
-    console.log(`Using Go runtime from: ${wasmExecPath}`);
+    if (!isBrowser()) {
+      console.log(`Using Go runtime from: ${path.join(__dirname, 'wasm_exec.cjs')}`);
+    }
     
     const wasmInstance = await loadGoWasmFromFile(wasmPath, {
       debug: true,
-      goWasmPath: wasmExecPath
+      goWasmPath: isBrowser() ? undefined : path.join(__dirname, 'wasm_exec.cjs')
     });
-    console.log('✅ WASM module functions!',wasmInstance.functions);
+    console.log('✅ WASM module functions!', wasmInstance.functions);
     
     console.log('🚀 WASM module loaded successfully!\n');
     
@@ -154,9 +190,11 @@ async function testEnhancedGoWasm() {
       console.log('   Then run this test again.');
     }
   } finally {
-    // Force exit to prevent hanging
-    console.log('🏁 Test finished, exiting...');
-    process.exit(0);
+    // Force exit to prevent hanging (Node.js only)
+    if (!isBrowser()) {
+      console.log('🏁 Test finished, exiting...');
+      process.exit(0);
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 // Global test setup
-import { jest } from '@jest/globals';
+import { afterAll, beforeEach, jest } from '@jest/globals';
 
 // Mock console methods to reduce noise in tests
 const originalConsole = { ...console };

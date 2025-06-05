@@ -10,6 +10,7 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "baraqex": "^1.0.36",
     "express": "^4.18.2",
     "frontend-hamroun": "latest"
   },

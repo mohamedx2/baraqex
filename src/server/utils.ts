@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
@@ -35,7 +34,7 @@ export function hashString(input: string, salt: string = ''): string {
 /**
  * Get pagination parameters from request
  */
-export function getPagination(req: Request): { page: number; limit: number; skip: number } {
+export function getPagination(req: any): { page: number; limit: number; skip: number } {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const rawLimit = parseInt(req.query.limit as string);
   
@@ -56,7 +55,7 @@ export function getPagination(req: Request): { page: number; limit: number; skip
 /**
  * Standard success response format
  */
-export function sendSuccess<T>(res: Response, data: T, message: string = 'Success'): Response {
+export function sendSuccess<T>(res: any, data: T, message: string = 'Success'): any {
   return res.json({
     success: true,
     message,
@@ -68,11 +67,11 @@ export function sendSuccess<T>(res: Response, data: T, message: string = 'Succes
  * Standard error response format
  */
 export function sendError(
-  res: Response, 
+  res: any, 
   message: string = 'An error occurred', 
   statusCode: number = 400,
   errors?: any
-): Response {
+): any {
   return res.status(statusCode).json({
     success: false,
     message,
@@ -84,7 +83,7 @@ export function sendError(
  * Validate required fields in request body
  */
 export function validateFields(
-  req: Request, 
+  req: any, 
   requiredFields: string[]
 ): { valid: boolean; missing: string[] } {
   const missing = requiredFields.filter(field => {

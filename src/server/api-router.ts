@@ -1,11 +1,10 @@
-import express, { Router, Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { AuthService } from './auth.js';
 import { pathToFileURL } from 'url';
 
 interface RouteHandler {
-  (req: Request, res: Response, next?: NextFunction): void | Promise<void>;
+  (req: any, res: any, next?: any): void | Promise<void>;
 }
 
 interface RouteModule {
@@ -15,22 +14,35 @@ interface RouteModule {
   delete?: RouteHandler;
   patch?: RouteHandler;
   options?: RouteHandler;
-  middleware?: ((req: Request, res: Response, next: NextFunction) => void)[];
+  middleware?: ((req: any, res: any, next: any) => void)[];
   // Add index signature to allow string indexing
-  [key: string]: RouteHandler | ((req: Request, res: Response, next: NextFunction) => void)[] | undefined;
+  [key: string]: RouteHandler | ((req: any, res: any, next: any) => void)[] | undefined;
 }
 
 export class ApiRouter {
-  public router: Router;
+  public router: any;
   private apiDir: string;
   private auth: AuthService | null;
 
   constructor(apiDir: string, auth: AuthService | null = null) {
-    this.router = express.Router();
+    this.router = null;
     this.apiDir = path.resolve(process.cwd(), apiDir);
     this.auth = auth;
     
-    this.setupRoutes();
+    this.initializeRouter();
+  }
+
+  private async initializeRouter() {
+    try {
+      const express = await import('express');
+      this.router = express.default.Router();
+      this.setupRoutes();
+    } catch (error: any) {
+      if (error.code === 'MODULE_NOT_FOUND') {
+        throw new Error('Express not installed. Run: npm install express @types/express');
+      }
+      throw error;
+    }
   }
 
   private setupRoutes() {
@@ -111,7 +123,7 @@ export class ApiRouter {
         for (const method of ['get', 'post', 'put', 'delete', 'patch', 'options']) {
           const handler = routeModule[method];
           if (typeof handler === 'function') {
-            const routerMethod = this.router[method as keyof Router] as any;
+            const routerMethod = this.router[method];
             routerMethod.call(
               this.router,
               routePath, 
@@ -138,7 +150,7 @@ export class ApiRouter {
         for (const method of ['get', 'post', 'put', 'delete', 'patch', 'options']) {
           const handler = routeModule[method];
           if (typeof handler === 'function') {
-            const routerMethod = this.router[method as keyof Router] as any;
+            const routerMethod = this.router[method];
             routerMethod.call(
               this.router,
               routePath, 
@@ -162,7 +174,7 @@ export class ApiRouter {
   }
 
   private wrapHandler(handler: RouteHandler) {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req: any, res: any, next: any) => {
       try {
         await handler(req, res, next);
       } catch (error) {

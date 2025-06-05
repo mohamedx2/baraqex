@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 export interface MiddlewareFunction {
-  (req: Request, res: Response, next: NextFunction): void | Promise<void>;
+  (req: any, res: any, next: any): void | Promise<void>;
 }
 
 // Common middleware functions
@@ -12,9 +12,9 @@ export const requestLogger: MiddlewareFunction = (req, res, next) => {
 
 export const errorHandler = (
   err: Error, 
-  req: Request, 
-  res: Response, 
-  next: NextFunction
+  req: any, 
+  res: any, 
+  next: any
 ) => {
   console.error(err.stack);
   res.status(500).json({
@@ -25,7 +25,7 @@ export const errorHandler = (
   });
 };
 
-export const notFoundHandler = (req: Request, res: Response) => {
+export const notFoundHandler = (req: any, res: any) => {
   res.status(404).json({
     error: {
       message: `Not Found - ${req.method} ${req.url}`
@@ -37,7 +37,7 @@ export const notFoundHandler = (req: Request, res: Response) => {
 export function rateLimit(options: { windowMs: number; max: number }) {
   const requests = new Map<string, number[]>();
   
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: any, res: any, next: any) => {
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
     const now = Date.now();
     

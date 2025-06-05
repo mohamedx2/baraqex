@@ -1,10 +1,8 @@
-import jwt, { SignOptions } from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import { Request, Response, NextFunction } from 'express';
+
 
 export interface AuthConfig {
   secret: string;
-  expiresIn?: SignOptions['expiresIn'];
+  expiresIn?: string | number;
 }
 
 export interface User {
@@ -27,38 +25,66 @@ export class AuthService {
   }
 
   async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, 10);
+    try {
+      const bcrypt = await import('bcryptjs');
+      return bcrypt.hash(password, 10);
+    } catch (error: any) {
+      if (error.code === 'MODULE_NOT_FOUND') {
+        throw new Error('bcryptjs not installed. Run: npm install bcryptjs @types/bcryptjs');
+      }
+      throw error;
+    }
   }
 
   async comparePasswords(password: string, hashedPassword: string): Promise<boolean> {
-    return bcrypt.compare(password, hashedPassword);
+    try {
+      const bcrypt = await import('bcryptjs');
+      return bcrypt.compare(password, hashedPassword);
+    } catch (error: any) {
+      if (error.code === 'MODULE_NOT_FOUND') {
+        throw new Error('bcryptjs not installed. Run: npm install bcryptjs @types/bcryptjs');
+      }
+      throw error;
+    }
   }
 
   generateToken(user: Omit<User, 'password'>): string {
-    const options: SignOptions = {};
-    
-    if (this.config.expiresIn) {
-      options.expiresIn = this.config.expiresIn;
+    try {
+      const jwt = require('jsonwebtoken');
+      const options: any = {};
+      
+      if (this.config.expiresIn) {
+        options.expiresIn = this.config.expiresIn;
+      }
+      
+      return jwt.sign(
+        { id: user.id, username: user.username, roles: user.roles || [] },
+        this.config.secret,
+        options
+      );
+    } catch (error: any) {
+      if (error.code === 'MODULE_NOT_FOUND') {
+        throw new Error('jsonwebtoken not installed. Run: npm install jsonwebtoken @types/jsonwebtoken');
+      }
+      throw error;
     }
-    
-    return jwt.sign(
-      { id: user.id, username: user.username, roles: user.roles || [] },
-      this.config.secret,
-      options
-    );
   }
 
   verifyToken(token: string): any {
     try {
+      const jwt = require('jsonwebtoken');
       return jwt.verify(token, this.config.secret);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'MODULE_NOT_FOUND') {
+        throw new Error('jsonwebtoken not installed. Run: npm install jsonwebtoken @types/jsonwebtoken');
+      }
       return null;
     }
   }
 
   // Express middleware for authentication
   initialize() {
-    return (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    return (req: any, res: any, next: any) => {
       const token = this.extractToken(req);
       if (token) {
         const decoded = this.verifyToken(token);
@@ -72,7 +98,7 @@ export class AuthService {
 
   // Express middleware for requiring authentication
   requireAuth() {
-    return (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    return (req: any, res: any, next: any) => {
       if (!req.user) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
@@ -82,7 +108,7 @@ export class AuthService {
 
   // Express middleware for requiring specific roles
   requireRoles(roles: string[]) {
-    return (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    return (req: any, res: any, next: any) => {
       if (!req.user) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
@@ -98,7 +124,7 @@ export class AuthService {
     };
   }
 
-  private extractToken(req: Request): string | null {
+  private extractToken(req: any): string | null {
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
       return req.headers.authorization.substring(7);
     }

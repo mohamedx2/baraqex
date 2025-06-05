@@ -1,88 +1,124 @@
 {
   "name": "baraqex",
-  "version": "1.0.32",
-  "description": "A wrapper package for frontend-hamroun framework",
+  "version": "1.0.36",
+  "description": "A powerful full-stack framework built on top of frontend-hamroun",
   "type": "module",
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "start": "node dist/index.js",
-    "prepublishOnly": "npm run build",
-    "test": "npm run build && node test-server.js",
-    "test:server": "node test-server.js",
-    "test:wasm": "node try/test-enhanced.js",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "cli": "node ./bin/baraqex.js"
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js"
+    },
+    "./wasm": {
+      "types": "./dist/wasm.d.ts",
+      "import": "./dist/wasm.js"
+    }
   },
-  "keywords": [
-    "frontend",
-    "framework",
-    "react",
-    "typescript",
-    "ssr"
-  ],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "crypto": "^1.0.1",
-    "esbuild": "^0.19.12",
-    "express": "^4.18.0",
-    "frontend-hamroun": "^1.2.35",
-    "jsonwebtoken": "^9.0.0",
-    "mongodb": "^6.0.0",
-    "mysql2": "^3.6.0",
-    "pg": "^8.11.0"
-  },
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.0",
-    "@types/cors": "^2.8.0",
-    "@types/express": "^4.17.0",
-    "@types/jest": "^29.5.0",
-    "@types/jsonwebtoken": "^9.0.0",
-    "@types/node": "^20.0.0",
-    "@types/pg": "^8.10.0",
-    "@types/supertest": "^2.0.12",
-    "boxen": "^7.1.1",
-    "chalk": "^5.3.0",
-    "commander": "^11.1.0",
-    "figlet": "^1.7.0",
-    "fs-extra": "^11.1.1",
-    "gradient-string": "^2.0.2",
-    "inquirer": "^9.2.12",
-    "jest": "^29.5.0",
-    "nanospinner": "^1.2.2",
-    "ora": "^7.0.1",
-    "supertest": "^6.3.3",
-    "terminal-link": "^3.0.0",
-    "ts-jest": "^29.1.0",
-    "typescript": "^5.0.0",
-    "update-notifier": "^7.0.0"
+  "browser": {
+    "./dist/index.js": "./dist/browser.js",
+    "crypto": false,
+    "fs": false,
+    "path": false,
+    "http": false,
+    "https": false,
+    "express": false,
+    "cors": false,
+    "mongodb": false,
+    "mysql2": false,
+    "pg": false,
+    "bcryptjs": false,
+    "jsonwebtoken": false
   },
   "files": [
-    "dist/**/*",
-    "bin/**/*",
-    "templates/**/*"
+    "dist/",
+    "templates/",
+    "bin/",
+    "README.md"
   ],
   "bin": {
     "baraqex": "./bin/baraqex.js"
   },
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+  "scripts": {
+    "build": "npm run clean && npm run build:types && npm run build:esm",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:esm": "node build.mjs",
+    "clean": "rimraf dist",
+    "test": "jest",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "framework",
+    "frontend",
+    "backend",
+    "fullstack",
+    "react",
+    "ssr",
+    "wasm",
+    "go"
+  ],
+  "author": "Mohamed X",
+  "license": "MIT",
+  "dependencies": {
+    "frontend-hamroun": "^1.0.0"
+  },
+  "peerDependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
     },
-    "./server": {
-      "import": "./dist/server/index.js",
-      "require": "./dist/server/index.cjs"
+    "cors": {
+      "optional": true
     },
-    "./wasm": {
-      "import": "./dist/wasm.js",
-      "require": "./dist/wasm.cjs"
+    "mongodb": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    },
+    "bcryptjs": {
+      "optional": true
+    },
+    "jsonwebtoken": {
+      "optional": true
     }
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.15.4",
+    "esbuild": "^0.19.0",
+    "jest": "^29.0.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "optionalDependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongodb": "^6.0.0",
+    "mysql2": "^3.6.0",
+    "pg": "^8.11.0"
   }
 }

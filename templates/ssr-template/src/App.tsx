@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'frontend-hamroun';
+import { useState, useEffect, useRef, useMemo } from 'baraqex';
 
 // Custom hooks for better code organization
 function useTimer(initialTime = 0) {
@@ -10,7 +10,7 @@ function useTimer(initialTime = 0) {
     if (!isRunning) {
       setIsRunning(true);
       intervalRef.current = setInterval(() => {
-        setTime(prev => prev + 1);
+        setTime((prev: number) => prev + 1);
       }, 1000);
     }
   };
@@ -50,8 +50,8 @@ function useTimer(initialTime = 0) {
 function useCounter(initialValue = 0, step = 1) {
   const [count, setCount] = useState(initialValue);
   
-  const increment = () => setCount(prev => prev + step);
-  const decrement = () => setCount(prev => prev - step);
+  const increment = () => setCount((prev: number) => prev + step);
+  const decrement = () => setCount((prev: number) => prev - step);
   const reset = () => setCount(initialValue);
   const setValue = (value: number | ((prev: number) => number)) => setCount(value);
 
@@ -71,7 +71,7 @@ function useTodos() {
     // Ensure text is a string and handle null/undefined
     const textString = String(text || '');
     if (textString.trim()) {
-      setTodos(prev => [...prev, {
+      setTodos((prev: any) => [...prev, {
         id: Date.now(),
         text: textString.trim(),
         completed: false
@@ -80,13 +80,13 @@ function useTodos() {
   };
 
   const toggleTodo = (id: number) => {
-    setTodos(prev => prev.map(todo => 
+    setTodos((prev: any[]) => prev.map((todo: { id: number; completed: any; }) => 
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
     ));
   };
 
   const deleteTodo = (id: number) => {
-    setTodos(prev => prev.filter(todo => todo.id !== id));
+    setTodos((prev: any[]) => prev.filter((todo: { id: number; }) => todo.id !== id));
   };
 
   const filteredTodos = useMemo(() => {
@@ -127,7 +127,7 @@ function useTheme() {
   const [theme, setTheme] = useState('light');
   
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme((prev: string) => prev === 'light' ? 'dark' : 'light');
   };
 
   const themeColors = useMemo(() => {
@@ -438,7 +438,7 @@ export function App() {
                 min="1"
                 max="10"
                 value={step}
-                onChange={(e) => setStep(parseInt(e.target.value))}
+                onChange={(e: { target: { value: string; }; }) => setStep(parseInt(e.target.value))}
                 style={{ width: '100%' }}
               />
             </div>
@@ -479,7 +479,7 @@ export function App() {
                       background: colors.bg,
                       color: colors.text
                     }}
-                    onKeyPress={(e) => {
+                    onKeyPress={(e: { key: string; target: { value: string; }; }) => {
                       if (e.key === 'Enter') {
                         setValue(parseInt(e.target.value) || 0);
                         e.target.value = '';
@@ -715,7 +715,7 @@ export function App() {
                  '🎉 No completed todos yet!'}
               </div>
             ) : (
-              todos.map(todo => (
+              todos.map((todo: { id: any; }) => (
                 <TodoItem
                   key={todo.id}
                   todo={todo}
