@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { renderToString, jsx } from 'frontend-hamroun';
+import { renderToString, jsx } from 'baraqex';
 import { App } from './App.js';
 
 const __filename = fileURLToPath(import.meta.url);

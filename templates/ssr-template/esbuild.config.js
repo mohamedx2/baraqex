@@ -25,10 +25,23 @@ await build({
     'fs',
     'path',
     'http',
-    'https'
+    'https',
+    // Add Node.js built-ins that should be excluded from browser
+    'url',
+    'util',
+    'stream',
+    'buffer',
+    'events',
+    'querystring',
+    'os',
+    'child_process',
+    'cluster',
+    'net',
+    'tls',
+    'dns'
   ],
   alias: {
-    // Use browser build of baraqex
+    // Map baraqex to the browser version
     'baraqex': 'baraqex/browser'
   }
 });

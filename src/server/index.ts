@@ -278,14 +278,17 @@ export class Server {
         };
         
         // Render the component to HTML
-        const { html, success, error } = await renderComponent(PageComponent, initialProps);
+        const renderResult = await renderComponent(PageComponent, initialProps);
         
-        if (!success) {
+        if (!renderResult.success) {
           return { 
-            html: templates.generateErrorPage(500, 'Failed to render page', error instanceof Error ? error : new Error('Unknown error')), 
+            html: templates.generateErrorPage(500, 'Failed to render page', renderResult.error instanceof Error ? renderResult.error : new Error('Unknown error')), 
             statusCode: 500 
           };
         }
+        
+        // Get the HTML string from the render result (it's already a string)
+        const htmlContent = renderResult.html;
         
         // Generate the full HTML document
         let pageTitle = 'My App';
@@ -304,7 +307,7 @@ export class Server {
         const componentName = getComponentName(pagePath, pagesDir);
         
         // Generate full HTML document with our template
-        const fullHtml = templates.generateDocument(html, {
+        const fullHtml = templates.generateDocument(htmlContent, {
           title: pageTitle,
           // Get description from component if available
           description: typeof PageComponent.getDescription === 'function' 
@@ -509,13 +512,13 @@ export function parseCookies(req: any): Record<string, string> {
   return cookies;
 }
 
-// Fix the renderComponent function
-export const renderComponent = async (Component: any, props: any = {}) => {
+// Fix the renderComponent function to return synchronous result
+export const renderComponent = (Component: any, props: any = {}) => {
   try {
-    // Create HTML string from component
+    // Create HTML string from component using synchronous renderToString
     const html = renderToString(Component(props));
     return {
-      html,
+      html: typeof html === 'string' ? html : String(html),
       success: true
     };
   } catch (error) {

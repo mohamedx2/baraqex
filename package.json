@@ -1,6 +1,6 @@
 {
   "name": "baraqex",
-  "version": "1.0.36",
+  "version": "1.0.44",
   "description": "A powerful full-stack framework built on top of frontend-hamroun",
   "type": "module",
   "main": "dist/index.js",
@@ -50,7 +50,7 @@
     "baraqex": "./bin/baraqex.js"
   },
   "scripts": {
-    "build": "npm run clean && npm run build:types && npm run build:esm",
+    "build": "npm run clean && npm run build:esm",
     "build:types": "tsc --emitDeclarationOnly",
     "build:esm": "node build.mjs",
     "clean": "rimraf dist",
@@ -71,7 +71,7 @@
   "author": "Mohamed X",
   "license": "MIT",
   "dependencies": {
-    "frontend-hamroun": "^1.0.0"
+    "frontend-hamroun": "^1.2.35"
   },
   "peerDependencies": {
     "cors": "^2.8.5",
@@ -104,7 +104,6 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
-    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20.0.0",
     "@types/pg": "^8.15.4",
     "esbuild": "^0.19.0",

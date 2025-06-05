@@ -10,7 +10,7 @@ function useTimer(initialTime = 0) {
     if (!isRunning) {
       setIsRunning(true);
       intervalRef.current = setInterval(() => {
-        setTime((prev: number) => prev + 1);
+        setTime((prev) => prev + 1);
       }, 1000);
     }
   };
@@ -50,47 +50,45 @@ function useTimer(initialTime = 0) {
 function useCounter(initialValue = 0, step = 1) {
   const [count, setCount] = useState(initialValue);
   
-  const increment = () => setCount((prev: number) => prev + step);
-  const decrement = () => setCount((prev: number) => prev - step);
+  const increment = () => setCount((prev) => prev + step);
+  const decrement = () => setCount((prev) => prev - step);
   const reset = () => setCount(initialValue);
-  const setValue = (value: number | ((prev: number) => number)) => setCount(value);
+  const setValue = (value) => setCount(typeof value === 'function' ? value : value);
 
   return { count, increment, decrement, reset, setValue };
 }
 
 function useTodos() {
-  // Initialize with proper default array to prevent hydration issues
-  const [todos, setTodos] = useState([
+  // Initialize with stable array to prevent hydration issues
+  const [todos, setTodos] = useState(() => [
     { id: 1, text: 'Learn Frontend Hamroun', completed: false },
     { id: 2, text: 'Build SSR app', completed: true },
     { id: 3, text: 'Deploy to production', completed: false }
   ]);
   const [filter, setFilter] = useState('all');
 
-  const addTodo = (text: any) => {
-    // Ensure text is a string and handle null/undefined
-    const textString = String(text || '');
-    if (textString.trim()) {
-      setTodos((prev: any) => [...prev, {
+  const addTodo = (text) => {
+    const textString = String(text || '').trim();
+    if (textString) {
+      setTodos((prev) => [...prev, {
         id: Date.now(),
-        text: textString.trim(),
+        text: textString,
         completed: false
       }]);
     }
   };
 
-  const toggleTodo = (id: number) => {
-    setTodos((prev: any[]) => prev.map((todo: { id: number; completed: any; }) => 
+  const toggleTodo = (id) => {
+    setTodos((prev) => prev.map((todo) => 
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
     ));
   };
 
-  const deleteTodo = (id: number) => {
-    setTodos((prev: any[]) => prev.filter((todo: { id: number; }) => todo.id !== id));
+  const deleteTodo = (id) => {
+    setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
 
   const filteredTodos = useMemo(() => {
-    // Ensure todos is always an array to prevent hydration errors
     const todoArray = Array.isArray(todos) ? todos : [];
     
     switch (filter) {
@@ -104,7 +102,6 @@ function useTodos() {
   }, [todos, filter]);
 
   const stats = useMemo(() => {
-    // Ensure todos is always an array to prevent hydration errors
     const todoArray = Array.isArray(todos) ? todos : [];
     const total = todoArray.length;
     const completed = todoArray.filter(todo => todo.completed).length;
@@ -127,7 +124,7 @@ function useTheme() {
   const [theme, setTheme] = useState('light');
   
   const toggleTheme = () => {
-    setTheme((prev: string) => prev === 'light' ? 'dark' : 'light');
+    setTheme((prev) => prev === 'light' ? 'dark' : 'light');
   };
 
   const themeColors = useMemo(() => {
@@ -152,7 +149,17 @@ function useTheme() {
 }
 
 // Todo Item Component
-function TodoItem({ todo, onToggle, onDelete, ...props }:any) {
+function TodoItem({ todo, onToggle, onDelete }) {
+  const handleToggle = (e) => {
+    e.preventDefault();
+    onToggle(todo.id);
+  };
+
+  const handleDelete = (e) => {
+    e.preventDefault();
+    onDelete(todo.id);
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -169,12 +176,12 @@ function TodoItem({ todo, onToggle, onDelete, ...props }:any) {
       <input
         type="checkbox"
         checked={todo.completed}
-        onChange={() => onToggle(todo.id)}
+        onChange={handleToggle}
         style={{ marginRight: '0.75rem' }}
       />
       <span style={{ flex: 1 }}>{todo.text}</span>
       <button
-        onClick={() => onDelete(todo.id)}
+        onClick={handleDelete}
         style={{
           background: '#e74c3c',
           color: 'white',
@@ -233,23 +240,44 @@ export function App() {
   
   const [newTodo, setNewTodo] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [step, setStep] = useState(1);
   const inputRef = useRef(null);
 
   // Handle todo form submission
-  const handleTodoSubmit = (e: { preventDefault: () => void; }) => {
+  const handleTodoSubmit = (e) => {
     e.preventDefault();
-    // Ensure newTodo is a string before passing to addTodo
-    const todoText = String(newTodo || '');
-    addTodo(todoText);
-    setNewTodo('');
-    if (inputRef.current) {
-      inputRef.current.focus();
+    e.stopPropagation();
+    
+    const todoText = String(newTodo || '').trim();
+    if (todoText) {
+      addTodo(todoText);
+      setNewTodo('');
+      
+      // Focus input after state update
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 0);
     }
   };
 
-  // Dynamic step value for counter
-  const [step, setStep] = useState(1);
-  
+  const handleNewTodoChange = (e) => {
+    setNewTodo(e.target.value);
+  };
+
+  const handleStepChange = (e) => {
+    setStep(parseInt(e.target.value) || 1);
+  };
+
+  const handleSetValue = (e) => {
+    if (e.key === 'Enter') {
+      const value = parseInt(e.target.value) || 0;
+      setValue(value);
+      e.target.value = '';
+    }
+  };
+
   useEffect(() => {
     console.log('App mounted - Frontend Hamroun SSR working!');
     return () => console.log('App unmounted');
@@ -438,7 +466,7 @@ export function App() {
                 min="1"
                 max="10"
                 value={step}
-                onChange={(e: { target: { value: string; }; }) => setStep(parseInt(e.target.value))}
+                onChange={handleStepChange}
                 style={{ width: '100%' }}
               />
             </div>
@@ -479,12 +507,7 @@ export function App() {
                       background: colors.bg,
                       color: colors.text
                     }}
-                    onKeyPress={(e: { key: string; target: { value: string; }; }) => {
-                      if (e.key === 'Enter') {
-                        setValue(parseInt(e.target.value) || 0);
-                        e.target.value = '';
-                      }
-                    }}
+                    onKeyPress={handleSetValue}
                   />
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -637,7 +660,7 @@ export function App() {
               ref={inputRef}
               type="text"
               value={newTodo}
-              onChange={(e: { target: { value: string | ((prev: string) => string); }; }) => setNewTodo(e.target.value)}
+              onChange={handleNewTodoChange}
               placeholder="Add a new todo..."
               style={{
                 flex: 1,
@@ -715,7 +738,7 @@ export function App() {
                  '🎉 No completed todos yet!'}
               </div>
             ) : (
-              todos.map((todo: { id: any; }) => (
+              todos.map((todo) => (
                 <TodoItem
                   key={todo.id}
                   todo={todo}

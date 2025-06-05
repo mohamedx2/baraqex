@@ -119,20 +119,7 @@ if (isNode && !isBrowser) {
 }
 
 // Simple renderToString function for SSR compatibility (always available)
-export function renderToString(content: any): Promise<string> {
-  if (typeof content === 'string') {
-    return Promise.resolve(content);
-  }
-  if (typeof content === 'function') {
-    try {
-      const result = content();
-      return Promise.resolve(String(result));
-    } catch (error: any) {
-      return Promise.resolve(`<!-- Error rendering: ${error} -->`);
-    }
-  }
-  return Promise.resolve(String(content));
-}
+
 
 console.log('Baraqex - powered by Frontend Hamroun Framework with additional utilities');
 
