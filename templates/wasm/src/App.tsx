@@ -1,5 +1,5 @@
 import { jsx, useState, useEffect } from 'frontend-hamroun';
-import { loadGoWasm, callWasmFunction, isWasmReady, getWasmError } from './wasm-loader';
+import { loadGoWasm, callWasmFunction } from 'baraqex';
 
 export default function App() {
   const [wasmReady, setWasmReady] = useState(false);
@@ -16,13 +16,13 @@ export default function App() {
     
     async function loadWasm() {
       try {
-        console.log('Loading Go WASM module...');
+        console.log('Loading Go WASM module using baraqex API...');
         
-        // Load WASM using local loader
+        // Use baraqex API to load WASM
         await loadGoWasm('/example.wasm', {
           debug: true,
           onLoad: () => {
-            console.log('WASM module loaded successfully');
+            console.log('WASM module loaded successfully via baraqex');
           }
         });
         
@@ -46,12 +46,10 @@ export default function App() {
     };
   }, []);
 
-  // Call WASM functions with error handling
+  // Use baraqex callWasmFunction API
   const callFunction = (funcName: string, ...args: any[]) => {
     try {
-      if (!isWasmReady()) {
-        throw new Error('WASM not ready yet');
-      }
+      // Call using baraqex API
       return callWasmFunction(funcName, ...args);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Function call failed';
@@ -104,10 +102,7 @@ export default function App() {
     }
   };
 
-  // Get current error (either from state or WASM loader)
-  const currentError = wasmError || getWasmError();
-
-  if (!wasmReady && !currentError) {
+  if (!wasmReady && !wasmError) {
     return (
       <div className="app loading">
         <div className="spinner"></div>
@@ -117,11 +112,11 @@ export default function App() {
     );
   }
 
-  if (currentError) {
+  if (wasmError) {
     return (
       <div className="app error">
         <h2>WASM Error</h2>
-        <p>{currentError}</p>
+        <p>{wasmError}</p>
         <button onClick={() => window.location.reload()}>Reload Page</button>
         <details style={{ marginTop: '20px', textAlign: 'left' }}>
           <summary>Troubleshooting</summary>
@@ -139,11 +134,11 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>Baraqex + Go WASM Template</h1>
-        <p>High-performance computing with WebAssembly</p>
+        <h1>Frontend Hamroun + Go WASM (Baraqex)</h1>
+        <p>High-performance computing with WebAssembly via Baraqex API</p>
         <div className="status">
           <span className="status-indicator ready"></span>
-          WASM Ready
+          WASM Ready via Baraqex
         </div>
       </header>
 
@@ -185,7 +180,7 @@ export default function App() {
               <button onClick={handleAddition}>Add</button>
               <button onClick={handleMultiplication}>Multiply</button>
             </div>
-            <small>Go functions: goAdd, goMultiply</small>
+            <small>callWasmFunction('goAdd', {inputA}, {inputB})</small>
           </div>
 
           {/* Fibonacci */}
@@ -224,7 +219,7 @@ export default function App() {
         {/* Results Display */}
         {result && (
           <section className="results">
-            <h2>📊 WASM Result</h2>
+            <h2>📊 Baraqex WASM Result</h2>
             <div className="result-card">
               {result.type === 'hello' && (
                 <p><strong>Greeting:</strong> <span className="result-value">{result.value}</span></p>
@@ -452,6 +447,42 @@ export default function App() {
           background: #e0f2fe;
           padding: 2px 6px;
           border-radius: 4px;
+        }
+        
+        .info-section {
+          margin-top: 40px;
+        }
+        
+        .info-section h2 {
+          text-align: center;
+          margin-bottom: 30px;
+          color: #374151;
+        }
+        
+        .benefits-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+        }
+        
+        .benefit {
+          background: #f9fafb;
+          padding: 20px;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+          text-align: center;
+        }
+        
+        .benefit h4 {
+          margin: 0 0 8px 0;
+          color: #374151;
+          font-size: 1.1rem;
+        }
+        
+        .benefit p {
+          margin: 0;
+          color: #6b7280;
+          font-size: 0.9rem;
         }
         
         .error {

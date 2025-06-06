@@ -1,26 +1,24 @@
 {
-  "name": "wasm-template",
-  "version": "0.0.0",
+  "name": "wasm-app",
+  "version": "1.0.0",
+  "description": "Frontend Hamroun WASM Application",
+  "main": "src/App.tsx",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:wasm": "cd wasm && GOOS=js GOARCH=wasm go build -o ../public/example.wasm main.go",
-    "build:wasm:win": "cd wasm && set GOOS=js&& set GOARCH=wasm&& go build -o ../public/example.wasm main.go",
+    "build:wasm": "cd wasm && set GOOS=js && set GOARCH=wasm && go build -o ../public/example.wasm main.go",
+    "copy:wasm-exec": "copy \"%GOROOT%\\misc\\wasm\\wasm_exec.js\" public\\",
+    "setup:wasm": "npm run copy:wasm-exec && npm run build:wasm",
     "preview": "vite preview",
-    "copy-wasm-exec": "cp \"$(go env GOROOT)/misc/wasm/wasm_exec.js\" public/",
-    "copy-wasm-exec:win": "copy \"%GOROOT%\\misc\\wasm\\wasm_exec.js\" public\\",
-    "setup": "npm run copy-wasm-exec && npm run build:wasm",
-    "setup:win": "npm run copy-wasm-exec:win && npm run build:wasm:win"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "baraqex": "^1.0.32",
-    "frontend-hamroun": "^1.2.35"
+    "frontend-hamroun": "^1.0.35" ,
+    "baraqex": "1.0.45"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "buffer": "^6.0.3",
-    "process": "^0.11.10",
     "typescript": "^5.0.0",
     "vite": "^5.0.0"
   }

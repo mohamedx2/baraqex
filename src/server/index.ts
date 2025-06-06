@@ -277,7 +277,7 @@ export class Server {
           api: { serverTime: new Date().toISOString() }
         };
         
-        // Render the component to HTML
+        // Use the fixed renderComponent function
         const renderResult = await renderComponent(PageComponent, initialProps);
         
         if (!renderResult.success) {
@@ -287,7 +287,7 @@ export class Server {
           };
         }
         
-        // Get the HTML string from the render result (it's already a string)
+        // Get the HTML string from the render result
         const htmlContent = renderResult.html;
         
         // Generate the full HTML document
@@ -512,11 +512,18 @@ export function parseCookies(req: any): Record<string, string> {
   return cookies;
 }
 
-// Fix the renderComponent function to return synchronous result
-export const renderComponent = (Component: any, props: any = {}) => {
+// Fix the renderComponent function to use frontend-hamroun's renderToString properly
+export const renderComponent = async (Component: any, props: any = {}) => {
   try {
-    // Create HTML string from component using synchronous renderToString
-    const html = renderToString(Component(props));
+    // Import frontend-hamroun modules
+    const { jsx, renderToString } = await import('frontend-hamroun');
+    
+    // Create component element using jsx
+    const element = jsx(Component, props);
+    
+    // Use frontend-hamroun's renderToString for proper SSR
+    const html = renderToString(element);
+    
     return {
       html: typeof html === 'string' ? html : String(html),
       success: true
@@ -524,7 +531,7 @@ export const renderComponent = (Component: any, props: any = {}) => {
   } catch (error) {
     console.error('Error rendering component:', error);
     return {
-      html: `<div class="error">Error rendering component</div>`,
+      html: `<div class="error">Error rendering component: ${error instanceof Error ? error.message : 'Unknown error'}</div>`,
       success: false,
       error
     };

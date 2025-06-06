@@ -1,81 +1,56 @@
 {
   "name": "baraqex",
-  "version": "1.0.44",
-  "description": "A powerful full-stack framework built on top of frontend-hamroun",
+  "version": "1.0.46",
+  "description": "A powerful server-side framework built on Frontend Hamroun",
   "type": "module",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js"
     },
     "./browser": {
       "types": "./dist/browser.d.ts",
       "import": "./dist/browser.js"
     },
     "./server": {
-      "types": "./dist/server/index.d.ts",
-      "import": "./dist/server/index.js"
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
     },
     "./wasm": {
       "types": "./dist/wasm.d.ts",
       "import": "./dist/wasm.js"
     }
   },
-  "browser": {
-    "./dist/index.js": "./dist/browser.js",
-    "crypto": false,
-    "fs": false,
-    "path": false,
-    "http": false,
-    "https": false,
-    "express": false,
-    "cors": false,
-    "mongodb": false,
-    "mysql2": false,
-    "pg": false,
-    "bcryptjs": false,
-    "jsonwebtoken": false
-  },
   "files": [
     "dist/",
     "templates/",
     "bin/",
-    "README.md"
+    "README.md",
+    "README_WASM.md"
   ],
   "bin": {
     "baraqex": "./bin/baraqex.js"
   },
   "scripts": {
-    "build": "npm run clean && npm run build:esm",
-    "build:types": "tsc --emitDeclarationOnly",
-    "build:esm": "node build.mjs",
+    "build": "npm run clean && npm run build:types && npm run build:js",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build:js": "node build.js",
     "clean": "rimraf dist",
+    "dev": "npm run build && node dev-server.js",
     "test": "jest",
-    "dev": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "prepare": "npm run build"
   },
-  "keywords": [
-    "framework",
-    "frontend",
-    "backend",
-    "fullstack",
-    "react",
-    "ssr",
-    "wasm",
-    "go"
-  ],
-  "author": "Mohamed X",
-  "license": "MIT",
   "dependencies": {
     "frontend-hamroun": "^1.2.35"
   },
   "peerDependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.0"
+    "express": ">=4.18.0",
+    "cors": ">=2.8.0"
   },
   "peerDependenciesMeta": {
     "express": {
@@ -101,23 +76,39 @@
     }
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.18",
-    "@types/express": "^5.0.2",
     "@types/node": "^20.0.0",
-    "@types/pg": "^8.15.4",
+    "@types/express": "^4.17.0",
+    "@types/cors": "^2.8.0",
+    "@types/bcryptjs": "^2.4.0",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
     "esbuild": "^0.19.0",
+    "eslint": "^8.0.0",
     "jest": "^29.0.0",
     "rimraf": "^5.0.0",
     "typescript": "^5.0.0"
   },
-  "optionalDependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "express": "^4.18.0",
-    "jsonwebtoken": "^9.0.0",
-    "mongodb": "^6.0.0",
-    "mysql2": "^3.6.0",
-    "pg": "^8.11.0"
-  }
+  "keywords": [
+    "frontend-hamroun",
+    "server",
+    "framework",
+    "ssr",
+    "fullstack",
+    "webassembly",
+    "wasm",
+    "api",
+    "database",
+    "auth"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/baraqex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/baraqex/issues"
+  },
+  "homepage": "https://github.com/yourusername/baraqex#readme"
 }

@@ -2,72 +2,37 @@ import { defineConfig } from 'vite';
 import path from 'path';
 
 export default defineConfig({
-  root: 'src',
-  publicDir: '../public',
+  esbuild: {
+    jsx: 'transform',
+    jsxFactory: 'jsx',
+    jsxFragment: 'Fragment',
+    jsxImportSource: 'frontend-hamroun',
+  },
+  optimizeDeps: {
+    include: ['frontend-hamroun'],
+    exclude: []
+  },
+  server: {
+    fs: {
+      allow: ['..', '../..']
+    },
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    }
+  },
   build: {
-    outDir: '../dist',
-    emptyOutDir: true,
+    target: 'esnext',
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'src/index.html')
+      output: {
+        format: 'es'
       }
     }
   },
-  server: {
-    port: 3000,
-    open: true
-  },
-  optimizeDeps: {
-    exclude: [
-      // Exclude Node.js-only packages from browser bundling
-      'crypto',
-      'mongodb', 
-      'mysql2',
-      'pg',
-      'bcryptjs',
-      'jsonwebtoken',
-      'cors',
-      'express',
-      'fs',
-      'path',
-      'url',
-      'http',
-      'https',
-      'stream',
-      'util',
-      'events',
-      'buffer',
-      'assert',
-      'child_process',
-      'cluster',
-      'dgram',
-      'dns',
-      'domain',
-      'net',
-      'os',
-      'punycode',
-      'querystring',
-      'readline',
-      'repl',
-      'string_decoder',
-      'sys',
-      'timers',
-      'tls',
-      'tty',
-      'vm',
-      'worker_threads',
-      'zlib'
-    ]
-  },
-  define: {
-    global: 'globalThis',
-    'process.env': {}
-  },
   resolve: {
     alias: {
-      // Provide browser-compatible alternatives
-      buffer: 'buffer',
-      process: 'process/browser'
+      'frontend-hamroun/jsx-dev-runtime': 'frontend-hamroun',
+      'frontend-hamroun/jsx-runtime': 'frontend-hamroun'
     }
   }
 });
