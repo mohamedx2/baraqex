@@ -1,6 +1,6 @@
 {
   "name": "baraqex",
-  "version": "1.0.51",
+  "version": "1.0.62",
   "description": "A powerful server-side framework built on Frontend Hamroun",
   "type": "module",
   "main": "./dist/index.js",

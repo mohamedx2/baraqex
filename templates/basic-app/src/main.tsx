@@ -1,4 +1,4 @@
-import { jsx, render, useState, useEffect, useMemo, useRef, useErrorBoundary, createContext, useContext } from 'baraqex';
+import { render, useState, useEffect, useMemo, useRef, useErrorBoundary, createContext, useContext } from 'frontend-hamroun';
 import './main.css';
 
 // JSX type declarations
@@ -10,224 +10,10 @@ declare global {
   }
 }
 
-// Create a theme context
+// Create a theme context with proper typing
 const ThemeContext = createContext<'light' | 'dark'>('light');
 
-// Simple Counter Component with Tailwind styles
-function Counter() {
-  const [count, setCount] = useState(0);
-  const renderCount = useRef(0);
-
-  useEffect(() => {
-    renderCount.current += 1;
-  }, [count]);
-
-  const doubled = useMemo(() => count * 2, [count]);
-
-  return (
-    <div className="card max-w-sm mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-        Counter Example
-      </h2>
-      <div className="text-center">
-        <div className="text-4xl font-bold text-primary-600 mb-6">
-          {count}
-        </div>
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-2">Doubled: {doubled}</p>
-          <p className="text-sm text-gray-600">Renders: {renderCount.current}</p>
-        </div>
-        <div className="space-x-2">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="btn btn-primary"
-          >
-            Increment
-          </button>
-          <button
-            onClick={() => setCount(count - 1)}
-            className="btn btn-secondary"
-          >
-            Decrement
-          </button>
-          <button
-            onClick={() => setCount(0)}
-            className="btn btn-danger"
-          >
-            Reset
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Todo Item Component
-function TodoItem({ todo, onToggle, onDelete }: { 
-  todo: { id: number; text: string; completed: boolean }; 
-  onToggle: (id: number) => void; 
-  onDelete: (id: number) => void; 
-}) {
-  return (
-    <div className={`flex items-center justify-between p-3 rounded-md border transition-colors ${
-      todo.completed ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-    }`}>
-      <div className="flex items-center space-x-3">
-        <button
-          onClick={() => onToggle(todo.id)}
-          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-            todo.completed 
-              ? 'bg-green-500 border-green-500 text-white' 
-              : 'border-gray-300 hover:border-green-500'
-          }`}
-        >
-          {todo.completed && '✓'}
-        </button>
-        <span className={`transition-colors ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-          {todo.text}
-        </span>
-      </div>
-      <button
-        onClick={() => onDelete(todo.id)}
-        className="text-red-500 hover:text-red-700 px-2 py-1 rounded transition-colors"
-      >
-        Delete
-      </button>
-    </div>
-  );
-}
-
-// Todo List Component
-function TodoList() {
-  const [todos, setTodos] = useState<{ id: number; text: string; completed: boolean }[]>([
-    { id: 1, text: 'Learn Baraqex Framework', completed: false },
-    { id: 2, text: 'Build something awesome', completed: false },
-    { id: 3, text: 'Deploy to production', completed: false }
-  ]);
-  const [newTodo, setNewTodo] = useState('');
-
-  const addTodo = () => {
-    if (newTodo.trim()) {
-      setTodos([...todos, {
-        id: Date.now(),
-        text: newTodo.trim(),
-        completed: false
-      }]);
-      setNewTodo('');
-    }
-  };
-
-  const toggleTodo = (id: number) => {
-    setTodos(todos.map((todo: { id: number; completed: any; }) =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
-  };
-
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo: { id: number; }) => todo.id !== id));
-  };
-
-  const completedCount = todos.filter((todo: { completed: any; }) => todo.completed).length;
-  const totalCount = todos.length;
-
-  return (
-    <div className="card max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-        Todo List
-      </h2>
-      
-      <div className="mb-4">
-        <div className="flex space-x-2 mb-2">
-          <input
-            type="text"
-            value={newTodo}
-            onChange={(e: { target: { value: any; }; }) => setNewTodo(e.target.value)}
-            onKeyPress={(e: { key: string; }) => e.key === 'Enter' && addTodo()}
-            placeholder="Add a new todo..."
-            className="input flex-1"
-          />
-          <button
-            onClick={addTodo}
-            className="btn btn-primary"
-          >
-            Add
-          </button>
-        </div>
-        <div className="text-sm text-gray-600 text-center">
-          {completedCount} of {totalCount} completed
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        {todos.map((todo: { id: Number; text?: string; completed?: boolean; }) => (
-          <TodoItem
-            key={todo.id}
-            todo={todo}
-            onToggle={toggleTodo}
-            onDelete={deleteTodo}
-          />
-        ))}
-      </div>
-
-      {todos.length === 0 && (
-        <p className="text-gray-500 text-center py-4">
-          No todos yet. Add one above!
-        </p>
-      )}
-    </div>
-  );
-}
-
-// Error boundary test component
-function BuggyComponent() {
-  const [shouldError, setShouldError] = useState(false);
-  
-  if (shouldError) {
-    throw new Error("Test error from BuggyComponent");
-  }
-  
-  return (
-    <div className="card max-w-sm mx-auto">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-        Error Boundary Test
-      </h3>
-      <p className="text-sm text-gray-600 mb-4 text-center">
-        Click the button below to test error handling
-      </p>
-      <div className="text-center">
-        <button 
-          onClick={() => setShouldError(true)}
-          className="btn btn-danger"
-        >
-          Trigger Error
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Context test component
-function ContextConsumer() {
-  const theme = useContext(ThemeContext);
-  
-  return (
-    <div className="card max-w-sm mx-auto">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-        Context API Test
-      </h3>
-      <div className={`p-4 rounded-md border text-center ${
-        theme === 'dark' ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-gray-50'
-      }`}>
-        <p className="text-sm mb-2">Current theme: <strong>{theme}</strong></p>
-        <p className="text-xs text-gray-500">
-          Theme is provided by Context API
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Main App Component
+// Main App Component - Fix the tab rendering logic
 function App() {
   const [activeTab, setActiveTab] = useState('counter');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -235,6 +21,16 @@ function App() {
 
   useEffect(() => {
     document.title = `Baraqex Demo - ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`;
+  }, [activeTab]);
+
+  // Add debug logging for theme changes
+  useEffect(() => {
+    console.log('Theme changed to:', theme);
+  }, [theme]);
+
+  // Add debug logging for tab changes
+  useEffect(() => {
+    console.log('Active tab changed to:', activeTab);
   }, [activeTab]);
 
   if (error) {
@@ -256,6 +52,26 @@ function App() {
       </div>
     );
   }
+
+  // Function to render the current tab content
+  const renderTabContent = () => {
+    console.log('Rendering tab content for:', activeTab);
+    
+    switch (activeTab) {
+      case 'counter':
+        console.log('Rendering Counter component');
+        return <Counter />;
+      case 'error':
+        console.log('Rendering BuggyComponent');
+        return <BuggyComponent />;
+      case 'context':
+        console.log('Rendering ContextConsumer component');
+        return <ContextConsumer />;
+      default:
+        console.log('Unknown tab, rendering Counter as fallback');
+        return <Counter />;
+    }
+  };
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -340,7 +156,11 @@ function App() {
               
               <div className="mt-8 text-center">
                 <button 
-                  onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                  onClick={() => {
+                    const newTheme = theme === 'light' ? 'dark' : 'light';
+                    console.log('Theme toggle clicked, changing from', theme, 'to', newTheme);
+                    setTheme(newTheme);
+                  }}
                   className={`btn ${theme === 'dark' ? 'bg-yellow-400 text-gray-900 hover:bg-yellow-300' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
                 >
                   🌙 Toggle {theme === 'light' ? 'Dark' : 'Light'} Mode
@@ -354,13 +174,15 @@ function App() {
             <div className="bg-white rounded-lg shadow-sm p-1 flex space-x-1 overflow-x-auto">
               {[
                 { id: 'counter', label: 'Counter', icon: '🔢' },
-                { id: 'todos', label: 'Todo List', icon: '✅' },
                 { id: 'error', label: 'Error Test', icon: '🚨' },
                 { id: 'context', label: 'Context', icon: '🔄' }
               ].map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    console.log('Tab clicked:', tab.id, 'current activeTab:', activeTab);
+                    setActiveTab(tab.id);
+                  }}
                   className={`px-4 py-2 rounded-md transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-primary-500 text-white'
@@ -374,12 +196,9 @@ function App() {
             </div>
           </div>
 
-          {/* Tab Content */}
+          {/* Tab Content - Use the function to render content */}
           <div className="flex justify-center mb-12">
-            {activeTab === 'counter' && <Counter />}
-            {activeTab === 'todos' && <TodoList />}
-            {activeTab === 'error' && <BuggyComponent />}
-            {activeTab === 'context' && <ContextConsumer />}
+            {renderTabContent()}
           </div>
 
           {/* Footer */}
@@ -461,5 +280,148 @@ function App() {
   );
 }
 
-// Mount the app
-render(<App />, document.getElementById('root'));
+// Simple Counter Component with Tailwind styles - Fixed hooks
+function Counter() {
+  // Initialize with proper values and ensure hooks work correctly
+  const [count, setCount] = useState(0);
+  const renderCount = useRef(0);
+
+  useEffect(() => {
+    renderCount.current = (renderCount.current || 0) + 1;
+    console.log('Counter effect running, count:', count, 'renders:', renderCount.current);
+  }, [count]);
+
+  // Ensure count is a number before calculation
+  const doubled = useMemo(() => {
+    const numCount = typeof count === 'number' ? count : 0;
+    console.log('Calculating doubled for count:', numCount);
+    return numCount * 2;
+  }, [count]);
+
+  // Add debug logging
+  console.log('Counter render - count:', count, 'doubled:', doubled, 'renders:', renderCount.current);
+
+  return (
+    <div className="card max-w-sm mx-auto">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+        Counter Example
+      </h2>
+      <div className="text-center">
+        <div className="text-4xl font-bold text-primary-600 mb-6">
+          {typeof count === 'number' ? count : 0}
+        </div>
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 mb-2">
+            Doubled: {typeof doubled === 'number' ? doubled : 'Error'}
+          </p>
+          <p className="text-sm text-gray-600">
+            Renders: {renderCount.current || 0}
+          </p>
+        </div>
+        <div className="space-x-2">
+          <button
+            onClick={() => {
+              console.log('Increment clicked, current count:', count);
+              const newCount = (typeof count === 'number' ? count : 0) + 1;
+              console.log('Setting new count:', newCount);
+              setCount(newCount);
+            }}
+            className="btn btn-primary"
+          >
+            Increment
+          </button>
+          <button
+            onClick={() => {
+              console.log('Decrement clicked, current count:', count);
+              const newCount = (typeof count === 'number' ? count : 0) - 1;
+              console.log('Setting new count:', newCount);
+              setCount(newCount);
+            }}
+            className="btn btn-secondary"
+          >
+            Decrement
+          </button>
+          <button
+            onClick={() => {
+              console.log('Reset clicked');
+              setCount(0);
+            }}
+            className="btn btn-danger"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Error boundary test component with debugging
+function BuggyComponent() {
+  console.log('BuggyComponent rendering...');
+  
+  const [shouldError, setShouldError] = useState(false);
+  
+  if (shouldError) {
+    throw new Error("Test error from BuggyComponent");
+  }
+  
+  return (
+    <div className="card max-w-sm mx-auto">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+        Error Boundary Test
+      </h3>
+      <p className="text-sm text-gray-600 mb-4 text-center">
+        Click the button below to test error handling
+      </p>
+      <div className="text-center">
+        <button 
+          onClick={() => {
+            console.log('Triggering error...');
+            setShouldError(true);
+          }}
+          className="btn btn-danger"
+        >
+          Trigger Error
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Context test component - fixed to properly extract theme value
+function ContextConsumer() {
+  const theme = useContext(ThemeContext);
+  
+  // Extract the actual theme value - handle both direct values and wrapped objects
+  const actualTheme = typeof theme === 'object' && theme !== null 
+    ? (theme as any).value || 'light'
+    : (typeof theme === 'string' ? theme : 'light');
+  
+  console.log('Context consumer - raw theme:', theme, 'actual theme:', actualTheme);
+  
+  return (
+    <div className="card max-w-sm mx-auto">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+        Context API Test
+      </h3>
+      <div className={`p-4 rounded-md border text-center ${
+        actualTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-gray-50'
+      }`}>
+        <p className="text-sm mb-2">Current theme: <strong>{actualTheme}</strong></p>
+        <p className="text-xs text-gray-500">
+          Theme is provided by Context API
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Mount the app with null check and debug logging
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  console.log('Mounting app to root element');
+  render(<App />, rootElement);
+} else {
+  console.error('Root element not found');
+}

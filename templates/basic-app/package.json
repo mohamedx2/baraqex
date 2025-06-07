@@ -11,8 +11,10 @@
     "lint:fix": "eslint src --ext ts,tsx --fix"
   },
   "dependencies": {
-    "baraqex": "^1.0.50",
-    "frontend-hamroun": "latest"
+    "baraqex": "^1.0.60",
+    "frontend-hamroun": "^1.2.35",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",
