@@ -1,20 +1,31 @@
 {
   "name": "baraqex-basic-app",
   "version": "1.0.0",
+  "description": "Basic Baraqex application with Tailwind CSS",
   "type": "module",
-  "description": "Basic Baraqex application",
-  "main": "src/index.js",
+  "main": "src/main.tsx",
   "scripts": {
-    "dev": "node server.js",
-    "build": "npm run build:client",
-    "build:client": "echo 'Building client...'",
-    "start": "node server.js",
-    "test": "node test.js"
+    "dev": "concurrently \"npm run css:watch\" \"npm run js:watch\" \"npm run serve\"",
+    "build": "npm run css:build && npm run js:build",
+    "preview": "npm run build && npm run serve",
+    "css:build": "tailwindcss -i src/main.css -o dist/main.css --minify",
+    "css:watch": "tailwindcss -i src/main.css -o dist/main.css --watch",
+    "js:build": "node esbuild.config.js",
+    "js:watch": "node esbuild.config.js --watch",
+    "serve": "node server.js"
+  },
+  "keywords": ["baraqex", "frontend-hamroun", "tailwind", "typescript"],
+  "author": "Baraqex Team",
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "concurrently": "^8.2.0",
+    "esbuild": "^0.19.0",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.0.0"
   },
   "dependencies": {
-    "baraqex": "^1.0.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.0"
+    "baraqex": "latest"
   }
 }

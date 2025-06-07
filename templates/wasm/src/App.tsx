@@ -151,7 +151,7 @@ export default function App() {
               <input 
                 type="text" 
                 value={name} 
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: { target: { value: string | ((prev: string) => string); }; }) => setName(e.target.value)}
                 placeholder="Enter your name"
               />
               <button onClick={handleHello}>Say Hello</button>
@@ -166,13 +166,13 @@ export default function App() {
               <input 
                 type="number" 
                 value={inputA} 
-                onChange={(e) => setInputA(Number(e.target.value))}
+                onChange={(e: { target: { value: any; }; }) => setInputA(Number(e.target.value))}
                 placeholder="First number"
               />
               <input 
                 type="number" 
                 value={inputB} 
-                onChange={(e) => setInputB(Number(e.target.value))}
+                onChange={(e: { target: { value: any; }; }) => setInputB(Number(e.target.value))}
                 placeholder="Second number"
               />
             </div>
@@ -190,7 +190,7 @@ export default function App() {
               <input 
                 type="number" 
                 value={fibInput} 
-                onChange={(e) => setFibInput(Number(e.target.value))}
+                onChange={(e: { target: { value: any; }; }) => setFibInput(Number(e.target.value))}
                 placeholder="Fibonacci number"
                 min="0"
                 max="40"
@@ -207,7 +207,7 @@ export default function App() {
               <input 
                 type="number" 
                 value={primeInput} 
-                onChange={(e) => setPrimeInput(Number(e.target.value))}
+                onChange={(e: { target: { value: any; }; }) => setPrimeInput(Number(e.target.value))}
                 placeholder="Number to check"
                 min="1"
               />

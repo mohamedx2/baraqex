@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom component styles */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md transition-colors font-medium inline-flex items-center justify-center cursor-pointer border-none outline-none;
+  }
+  
+  .btn:focus {
+    @apply ring-2 ring-offset-2 ring-primary-500;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 text-white;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-500 hover:bg-gray-600 text-white;
+  }
+  
+  .btn-danger {
+    @apply bg-red-500 hover:bg-red-600 text-white;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-lg p-6;
+  }
+  
+  .input {
+    @apply px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-full;
+  }
+}
+
+/* Additional utility classes */
+@layer utilities {
+  .text-primary-600 {
+    color: theme('colors.primary.600');
+  }
+  
+  .bg-primary-500 {
+    background-color: theme('colors.primary.500');
+  }
+  
+  .bg-primary-600 {
+    background-color: theme('colors.primary.600');
+  }
+  
+  .hover\:bg-primary-600:hover {
+    background-color: theme('colors.primary.600');
+  }
+  
+  .ring-primary-500 {
+    --tw-ring-color: theme('colors.primary.500');
+  }
+  
+  .border-primary-500 {
+    border-color: theme('colors.primary.500');
+  }
+}
