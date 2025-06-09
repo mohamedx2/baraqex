@@ -8,38 +8,36 @@ export type { ServerConfig, User, DbConfig, MiddlewareFunction } from './server/
 export { loadGoWasm, callWasmFunction, isWasmReady, getWasmFunctions, useGoWasm } from './wasm.js';
 export type { GoWasmOptions, GoWasmInstance } from './server/types.js';
 
+// Export template utilities (safe for browser)
+export { generateDocument, generateErrorPage, generateLoadingPage } from './server/templates.js';
+
 // Runtime environment detection
 const isNode = typeof process !== 'undefined' && process.versions?.node;
 const isBrowser = typeof window !== 'undefined';
 
-// Import template utilities with conditional loading
-let templateGenerateDocument: any = null;
-let templateGenerateErrorPage: any = null;
-let templateGenerateLoadingPage: any = null;
-
-// Server functionality variables (will be assigned if available)
-let BaraqexServerClass: any = null;
-let createServerFn: any = null;
-let createDevServerFn: any = null;
-let createProductionServerFn: any = null;
-let renderComponentFn: any = null;
-let DatabaseClass: any = null;
-let AuthServiceClass: any = null;
-let ApiRouterClass: any = null;
-let requestLoggerFn: any = null;
-let errorHandlerFn: any = null;
-let notFoundHandlerFn: any = null;
-let rateLimitFn: any = null;
-let initNodeWasmFn: any = null;
-let loadGoWasmFromFileFn: any = null;
-let safeJsonParseFn: any = (json: string, fallback: any) => {
+// Export stubs for server functionality to prevent import errors in browser
+export let BaraqexServer: any = null;
+export let createServer: any = null;
+export let createDevServer: any = null;
+export let createProductionServer: any = null;
+export let renderComponent: any = null;
+export let Database: any = null;
+export let AuthService: any = null;
+export let ApiRouter: any = null;
+export let requestLogger: any = null;
+export let errorHandler: any = null;
+export let notFoundHandler: any = null;
+export let rateLimit: any = null;
+export let initNodeWasm: any = null;
+export let loadGoWasmFromFile: any = null;
+export let safeJsonParse: any = (json: string, fallback: any) => {
   try {
     return JSON.parse(json);
   } catch {
     return fallback;
   }
 };
-let generateTokenFn: any = (length: number = 32) => {
+export let generateToken: any = (length: number = 32) => {
   const array = new Uint8Array(length);
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     crypto.getRandomValues(array);
@@ -50,30 +48,24 @@ let generateTokenFn: any = (length: number = 32) => {
   }
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 };
-let hashStringFn: any = null;
-let getPaginationFn: any = null;
-let sendSuccessFn: any = null;
-let sendErrorFn: any = null;
-let validateFieldsFn: any = null;
-let validateFileUploadFn: any = null;
-let getEnvironmentInfoFn: any = null;
-let isDirectoryEmptyFn: any = null;
-let ensureDirectoryFn: any = null;
-let writeJsonFileFn: any = null;
-let readJsonFileFn: any = null;
-let baraqexRenderToStringFn: any = null;
+export let hashString: any = null;
+export let getPagination: any = null;
+export let sendSuccess: any = null;
+export let sendError: any = null;
+export let validateFields: any = null;
+export let validateFileUpload: any = null;
+export let getEnvironmentInfo: any = null;
+export let isDirectoryEmpty: any = null;
+export let ensureDirectory: any = null;
+export let writeJsonFile: any = null;
+export let readJsonFile: any = null;
+export let baraqexRenderToString: any = null;
 
 // Conditional server module loading
 if (isNode && !isBrowser) {
   // Only attempt to load server modules in Node.js environment
   Promise.resolve().then(async () => {
     try {
-      // Load template utilities first
-      const templatesModule = await import('./server/templates.js');
-      templateGenerateDocument = templatesModule.generateDocument;
-      templateGenerateErrorPage = templatesModule.generateErrorPage;
-      templateGenerateLoadingPage = templatesModule.generateLoadingPage;
-
       // Check if server dependencies are available before importing
       try {
         await import('express');
@@ -85,110 +77,49 @@ if (isNode && !isBrowser) {
       const serverModule = await import('./server/index.js');
       
       // Assign server functionality
-      BaraqexServerClass = serverModule.Server;
-      createServerFn = serverModule.createServer;
-      createDevServerFn = serverModule.createDevServer;
-      createProductionServerFn = serverModule.createProductionServer;
-      renderComponentFn = serverModule.renderComponent;
-      DatabaseClass = serverModule.Database;
-      AuthServiceClass = serverModule.AuthService;
-      ApiRouterClass = serverModule.ApiRouter;
-      requestLoggerFn = serverModule.requestLogger;
-      errorHandlerFn = serverModule.errorHandler;
-      notFoundHandlerFn = serverModule.notFoundHandler;
-      rateLimitFn = serverModule.rateLimit;
-      initNodeWasmFn = serverModule.initNodeWasm;
-      loadGoWasmFromFileFn = serverModule.loadGoWasmFromFile;
+      BaraqexServer = serverModule.Server;
+      createServer = serverModule.createServer;
+      createDevServer = serverModule.createDevServer;
+      createProductionServer = serverModule.createProductionServer;
+      renderComponent = serverModule.renderComponent;
+      Database = serverModule.Database;
+      AuthService = serverModule.AuthService;
+      ApiRouter = serverModule.ApiRouter;
+      requestLogger = serverModule.requestLogger;
+      errorHandler = serverModule.errorHandler;
+      notFoundHandler = serverModule.notFoundHandler;
+      rateLimit = serverModule.rateLimit;
+      initNodeWasm = serverModule.initNodeWasm;
+      loadGoWasmFromFile = serverModule.loadGoWasmFromFile;
       
       // Assign server utilities
       const utilsModule = await import('./server/utils.js');
-      safeJsonParseFn = utilsModule.safeJsonParse;
-      generateTokenFn = utilsModule.generateToken;
-      hashStringFn = utilsModule.hashString;
-      getPaginationFn = utilsModule.getPagination;
-      sendSuccessFn = utilsModule.sendSuccess;
-      sendErrorFn = utilsModule.sendError;
-      validateFieldsFn = utilsModule.validateFields;
-      validateFileUploadFn = utilsModule.validateFileUpload;
-      getEnvironmentInfoFn = utilsModule.getEnvironmentInfo;
-      isDirectoryEmptyFn = utilsModule.isDirectoryEmpty;
-      ensureDirectoryFn = utilsModule.ensureDirectory;
-      writeJsonFileFn = utilsModule.writeJsonFile;
-      readJsonFileFn = utilsModule.readJsonFile;
+      safeJsonParse = utilsModule.safeJsonParse;
+      generateToken = utilsModule.generateToken;
+      hashString = utilsModule.hashString;
+      getPagination = utilsModule.getPagination;
+      sendSuccess = utilsModule.sendSuccess;
+      sendError = utilsModule.sendError;
+      validateFields = utilsModule.validateFields;
+      validateFileUpload = utilsModule.validateFileUpload;
+      getEnvironmentInfo = utilsModule.getEnvironmentInfo;
+      isDirectoryEmpty = utilsModule.isDirectoryEmpty;
+      ensureDirectory = utilsModule.ensureDirectory;
+      writeJsonFile = utilsModule.writeJsonFile;
+      readJsonFile = utilsModule.readJsonFile;
       
       // Assign server-renderer
       const rendererModule = await import('./server-renderer.js');
-      baraqexRenderToStringFn = rendererModule.renderToString;
+      baraqexRenderToString = rendererModule.renderToString;
       
     } catch (error: any) {
       console.warn('Server modules not available:', error.message);
     }
   });
-} else {
-  // Browser environment - load templates with safe fallbacks
-  templateGenerateDocument = (content: string, options: any = {}) => 
-    `<!DOCTYPE html><html><head><title>${options.title || 'App'}</title></head><body>${content}</body></html>`;
-  templateGenerateErrorPage = (code: number, message: string) => 
-    `<div>Error ${code}: ${message}</div>`;
-  templateGenerateLoadingPage = (message: string = 'Loading...') => 
-    `<div>${message}</div>`;
 }
 
 // Simple renderToString function for SSR compatibility (always available)
-let renderToStringFallback = (component: any): string => {
-  try {
-    if (typeof component === 'function') {
-      const result = component();
-      return typeof result === 'string' ? result : String(result || '');
-    }
-    return String(component || '');
-  } catch (error) {
-    return '<div>Error rendering component</div>';
-  }
-};
 
-// Export server functionality with safe getters
-export const BaraqexServer = BaraqexServerClass;
-export const createServer = createServerFn;
-export const createDevServer = createDevServerFn;
-export const createProductionServer = createProductionServerFn;
-export const renderComponent = renderComponentFn;
-export const Database = DatabaseClass;
-export const AuthService = AuthServiceClass;
-export const ApiRouter = ApiRouterClass;
-export const requestLogger = requestLoggerFn;
-export const errorHandler = errorHandlerFn;
-export const notFoundHandler = notFoundHandlerFn;
-export const rateLimit = rateLimitFn;
-export const initNodeWasm = initNodeWasmFn;
-export const loadGoWasmFromFile = loadGoWasmFromFileFn;
-export const safeJsonParse = safeJsonParseFn;
-export const generateToken = generateTokenFn;
-export const hashString = hashStringFn;
-export const getPagination = getPaginationFn;
-export const sendSuccess = sendSuccessFn;
-export const sendError = sendErrorFn;
-export const validateFields = validateFieldsFn;
-export const validateFileUpload = validateFileUploadFn;
-export const getEnvironmentInfo = getEnvironmentInfoFn;
-export const isDirectoryEmpty = isDirectoryEmptyFn;
-export const ensureDirectory = ensureDirectoryFn;
-export const writeJsonFile = writeJsonFileFn;
-export const readJsonFile = readJsonFileFn;
-export const baraqexRenderToString = baraqexRenderToStringFn;
-
-// Export template utilities with safe getters
-export const generateDocument = () => templateGenerateDocument || templateGenerateDocument;
-export const generateErrorPage = () => templateGenerateErrorPage || templateGenerateErrorPage;
-export const generateLoadingPage = () => templateGenerateLoadingPage || templateGenerateLoadingPage;
-
-// Export template utilities with alternative names
-export const generateDocumentTemplate = () => templateGenerateDocument || templateGenerateDocument;
-export const generateErrorPageTemplate = () => templateGenerateErrorPage || templateGenerateErrorPage;
-export const generateLoadingPageTemplate = () => templateGenerateLoadingPage || templateGenerateLoadingPage;
-
-// Export the fallback renderToString
-export const renderToString = renderToStringFallback;
 
 console.log('Baraqex - powered by Frontend Hamroun Framework with additional utilities');
 

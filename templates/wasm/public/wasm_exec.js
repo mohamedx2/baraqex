@@ -229,18 +229,7 @@
 						delete this._goRefCounts;
 						delete this._ids;
 						delete this._idPool;
-						
-						// Modified: Don't call process.exit in Node.js testing environment
-						// Instead, just call the exit handler and resolve the promise
-						if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') {
-							// In development/testing, just log and continue
-							console.log('[WASM] Go program finished with exit code:', code);
-							this.exit(code);
-							this._resolveExitPromise();
-						} else {
-							// In production, call the original exit behavior
-							this.exit(code);
-						}
+						this.exit(code);
 					},
 
 					// func wasmWrite(fd uintptr, p unsafe.Pointer, n int32)
