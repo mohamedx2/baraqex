@@ -1,4 +1,4 @@
-import { render, useState, useEffect, useMemo, useRef, useErrorBoundary, createContext, useContext } from 'frontend-hamroun';
+import { render, useState, useEffect, useMemo, useRef, useErrorBoundary, createContext, useContext } from 'baraqex';
 import './main.css';
 
 // JSX type declarations

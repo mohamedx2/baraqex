@@ -4,7 +4,7 @@ export default defineConfig({
   esbuild: {
     jsxFactory: 'jsx',
     jsxFragment: 'Fragment',
-    jsxInject: `import { jsx } from 'frontend-hamroun';`
+    jsxInject: `import { jsx } from 'baraqex';`
   },
   define: {
     // Ensure we're in browser mode
@@ -26,7 +26,8 @@ export default defineConfig({
     ],
     // Force include browser-safe modules
     include: [
-      'frontend-hamroun'
+      'frontend-hamroun',
+      'baraqex'
     ]
   },
   resolve: {
