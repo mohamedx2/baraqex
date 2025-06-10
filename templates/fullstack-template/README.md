@@ -1,56 +1,52 @@
-# Full-Stack Frontend Hamroun App
+# Fullstack Baraqex Application
 
-A complete full-stack application with API routes and SSR.
+A complete fullstack application template built with the Baraqex framework, featuring authentication, API integration, and modern development practices.
 
-## Features
+## 🚀 Features
 
-- ✅ Server-side rendering with hydration
-- ✅ API routes in `src/api/`
-- ✅ Page-based routing in `src/pages/`
-- ✅ Frontend Hamroun hooks support
-- ✅ Express.js backend
-- ✅ Static file serving
+- **Full-Stack Architecture**: Complete frontend and backend integration
+- **Authentication System**: JWT-based auth with login/register
+- **RESTful API**: Well-structured API endpoints with middleware
+- **Database Support**: MongoDB, MySQL, and PostgreSQL options
+- **Real-time Updates**: Modern state management
+- **Security**: Built-in security headers, rate limiting, CORS
+- **Developer Experience**: Hot reload, TypeScript, ESLint, Prettier
+- **Production Ready**: Environment configuration, logging, error handling
 
-## Getting Started
+## 📋 Prerequisites
 
-```bash
-npm install
-npm run dev
-```
+- Node.js 16+ 
+- npm, yarn, or pnpm
+- Database (optional - works with in-memory storage for demo)
 
-## Project Structure
+## 🛠️ Quick Start
 
-```
-src/
-  ├── pages/           # Page components (SSR)
-  │   └── index.js     # Homepage
-  └── api/             # API routes
-      └── hello.js     # Example API endpoint
-```
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-## Available Endpoints
+2. **Environment setup**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
 
-- **Homepage**: http://localhost:3000
-- **API Hello**: http://localhost:3000/api/hello
+3. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
-## Adding Pages
+4. **Open your browser**
+   - Frontend: http://localhost:3000
+   - API: http://localhost:3000/api
+   - API Docs: http://localhost:3000/api-docs
 
-Create new files in `src/pages/`:
-- `src/pages/about.js` → `/about`
-- `src/pages/contact.js` → `/contact`
-- `src/pages/blog/index.js` → `/blog`
+## 🎯 Default Credentials
 
-## Adding API Routes
+For demo purposes, you can login with:
+- **Username**: `admin` or `user`
+- **Password**: `password`
 
-Create new files in `src/api/`:
-- `src/api/users.js` → `/api/users`
-- `src/api/posts/index.js` → `/api/posts`
-- `src/api/posts/[id].js` → `/api/posts/:id`
+## 📁 Project Structure
 
-Each API file should export functions named after HTTP methods:
-```javascript
-export function get(req, res) { /* ... */ }
-export function post(req, res) { /* ... */ }
-export function put(req, res) { /* ... */ }
-export function delete(req, res) { /* ... */ }
-```

@@ -8,36 +8,48 @@ export type { ServerConfig, User, DbConfig, MiddlewareFunction } from './server/
 export { loadGoWasm, callWasmFunction, isWasmReady, getWasmFunctions, useGoWasm } from './wasm.js';
 export type { GoWasmOptions, GoWasmInstance } from './server/types.js';
 
-// Export template utilities (safe for browser)
-export { generateDocument, generateErrorPage, generateLoadingPage } from './server/templates.js';
-
 // Runtime environment detection
 const isNode = typeof process !== 'undefined' && process.versions?.node;
 const isBrowser = typeof window !== 'undefined';
 
-// Export stubs for server functionality to prevent import errors in browser
-export let BaraqexServer: any = null;
-export let createServer: any = null;
-export let createDevServer: any = null;
-export let createProductionServer: any = null;
-export let renderComponent: any = null;
-export let Database: any = null;
-export let AuthService: any = null;
-export let ApiRouter: any = null;
-export let requestLogger: any = null;
-export let errorHandler: any = null;
-export let notFoundHandler: any = null;
-export let rateLimit: any = null;
-export let initNodeWasm: any = null;
-export let loadGoWasmFromFile: any = null;
-export let safeJsonParse: any = (json: string, fallback: any) => {
+// Declare all server functionality variables
+let BaraqexServer: any = null;
+let createServer: any = null;
+let createDevServer: any = null;
+let createProductionServer: any = null;
+let renderComponent: any = null;
+let Database: any = null;
+let AuthService: any = null;
+let ApiRouter: any = null;
+let requestLogger: any = null;
+let errorHandler: any = null;
+let notFoundHandler: any = null;
+let rateLimit: any = null;
+let initNodeWasm: any = null;
+let loadGoWasmFromFile: any = null;
+let hashString: any = null;
+let getPagination: any = null;
+let sendSuccess: any = null;
+let sendError: any = null;
+let validateFields: any = null;
+let validateFileUpload: any = null;
+let getEnvironmentInfo: any = null;
+let isDirectoryEmpty: any = null;
+let ensureDirectory: any = null;
+let writeJsonFile: any = null;
+let readJsonFile: any = null;
+let baraqexRenderToString: any = null;
+
+// Browser-safe utilities with fallbacks
+let safeJsonParse = (json: string, fallback: any) => {
   try {
     return JSON.parse(json);
   } catch {
     return fallback;
   }
 };
-export let generateToken: any = (length: number = 32) => {
+
+let generateToken = (length: number = 32) => {
   const array = new Uint8Array(length);
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     crypto.getRandomValues(array);
@@ -48,78 +60,140 @@ export let generateToken: any = (length: number = 32) => {
   }
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 };
-export let hashString: any = null;
-export let getPagination: any = null;
-export let sendSuccess: any = null;
-export let sendError: any = null;
-export let validateFields: any = null;
-export let validateFileUpload: any = null;
-export let getEnvironmentInfo: any = null;
-export let isDirectoryEmpty: any = null;
-export let ensureDirectory: any = null;
-export let writeJsonFile: any = null;
-export let readJsonFile: any = null;
-export let baraqexRenderToString: any = null;
 
-// Conditional server module loading
+// Browser-safe template utilities
+let generateDocument = (content: string, options: any = {}) => 
+  `<!DOCTYPE html><html><head><title>${options.title || 'App'}</title></head><body>${content}</body></html>`;
+
+let generateErrorPage = (code: number, message: string) => 
+  `<div>Error ${code}: ${message}</div>`;
+
+let generateLoadingPage = (message: string = 'Loading...') => 
+  `<div>${message}</div>`;
+
+// Browser-safe renderToString function
+let renderToString = (component: any): string => {
+  try {
+    if (typeof component === 'function') {
+      const result = component();
+      return typeof result === 'string' ? result : String(result || '');
+    }
+    return String(component || '');
+  } catch (error) {
+    return '<div>Error rendering component</div>';
+  }
+};
+
+// Initialize server modules in Node.js environment
 if (isNode && !isBrowser) {
-  // Only attempt to load server modules in Node.js environment
-  Promise.resolve().then(async () => {
+  // Use dynamic import with IIFE to handle async initialization
+  (async () => {
     try {
-      // Check if server dependencies are available before importing
+      // Check if Express is available before importing server modules
       try {
         await import('express');
-      } catch {
+        
+        // Import server modules
+        const [serverModule, utilsModule, templatesModule, rendererModule] = await Promise.all([
+          import('./server/index.js'),
+          import('./server/utils.js'),
+          import('./server/templates.js'),
+          import('./server-renderer.js')
+        ]);
+        
+        // Assign server functionality
+        BaraqexServer = serverModule.Server;
+        createServer = serverModule.createServer;
+        createDevServer = serverModule.createDevServer;
+        createProductionServer = serverModule.createProductionServer;
+        renderComponent = serverModule.renderComponent;
+        Database = serverModule.Database;
+        AuthService = serverModule.AuthService;
+        ApiRouter = serverModule.ApiRouter;
+        requestLogger = serverModule.requestLogger;
+        errorHandler = serverModule.errorHandler;
+        notFoundHandler = serverModule.notFoundHandler;
+        rateLimit = serverModule.rateLimit;
+        initNodeWasm = serverModule.initNodeWasm;
+        loadGoWasmFromFile = serverModule.loadGoWasmFromFile;
+        
+        // Assign server utilities
+        safeJsonParse = utilsModule.safeJsonParse;
+        generateToken = utilsModule.generateToken;
+        hashString = utilsModule.hashString;
+        getPagination = utilsModule.getPagination;
+        sendSuccess = utilsModule.sendSuccess;
+        sendError = utilsModule.sendError;
+        validateFields = utilsModule.validateFields;
+        validateFileUpload = utilsModule.validateFileUpload;
+        getEnvironmentInfo = utilsModule.getEnvironmentInfo;
+        isDirectoryEmpty = utilsModule.isDirectoryEmpty;
+        ensureDirectory = utilsModule.ensureDirectory;
+        writeJsonFile = utilsModule.writeJsonFile;
+        readJsonFile = utilsModule.readJsonFile;
+        
+        // Assign template utilities
+        generateDocument = templatesModule.generateDocument;
+        generateErrorPage = templatesModule.generateErrorPage;
+        generateLoadingPage = templatesModule.generateLoadingPage;
+        
+        // Assign server-renderer
+        baraqexRenderToString = rendererModule.renderToString;
+        
+      } catch (expressError) {
         console.warn('Express not available - server functionality disabled');
-        return;
+        // Set error functions
+        createServer = () => {
+          throw new Error('Server functionality not available. Make sure you have Express installed: npm install express @types/express');
+        };
+        createDevServer = () => {
+          throw new Error('Server functionality not available. Make sure you have Express installed: npm install express @types/express');
+        };
+        createProductionServer = () => {
+          throw new Error('Server functionality not available. Make sure you have Express installed: npm install express @types/express');
+        };
       }
-
-      const serverModule = await import('./server/index.js');
-      
-      // Assign server functionality
-      BaraqexServer = serverModule.Server;
-      createServer = serverModule.createServer;
-      createDevServer = serverModule.createDevServer;
-      createProductionServer = serverModule.createProductionServer;
-      renderComponent = serverModule.renderComponent;
-      Database = serverModule.Database;
-      AuthService = serverModule.AuthService;
-      ApiRouter = serverModule.ApiRouter;
-      requestLogger = serverModule.requestLogger;
-      errorHandler = serverModule.errorHandler;
-      notFoundHandler = serverModule.notFoundHandler;
-      rateLimit = serverModule.rateLimit;
-      initNodeWasm = serverModule.initNodeWasm;
-      loadGoWasmFromFile = serverModule.loadGoWasmFromFile;
-      
-      // Assign server utilities
-      const utilsModule = await import('./server/utils.js');
-      safeJsonParse = utilsModule.safeJsonParse;
-      generateToken = utilsModule.generateToken;
-      hashString = utilsModule.hashString;
-      getPagination = utilsModule.getPagination;
-      sendSuccess = utilsModule.sendSuccess;
-      sendError = utilsModule.sendError;
-      validateFields = utilsModule.validateFields;
-      validateFileUpload = utilsModule.validateFileUpload;
-      getEnvironmentInfo = utilsModule.getEnvironmentInfo;
-      isDirectoryEmpty = utilsModule.isDirectoryEmpty;
-      ensureDirectory = utilsModule.ensureDirectory;
-      writeJsonFile = utilsModule.writeJsonFile;
-      readJsonFile = utilsModule.readJsonFile;
-      
-      // Assign server-renderer
-      const rendererModule = await import('./server-renderer.js');
-      baraqexRenderToString = rendererModule.renderToString;
-      
     } catch (error: any) {
       console.warn('Server modules not available:', error.message);
     }
-  });
+  })();
 }
 
-// Simple renderToString function for SSR compatibility (always available)
-
+// Export all the variables
+export {
+  BaraqexServer,
+  createServer,
+  createDevServer,
+  createProductionServer,
+  renderComponent,
+  Database,
+  AuthService,
+  ApiRouter,
+  requestLogger,
+  errorHandler,
+  notFoundHandler,
+  rateLimit,
+  initNodeWasm,
+  loadGoWasmFromFile,
+  safeJsonParse,
+  generateToken,
+  hashString,
+  getPagination,
+  sendSuccess,
+  sendError,
+  validateFields,
+  validateFileUpload,
+  getEnvironmentInfo,
+  isDirectoryEmpty,
+  ensureDirectory,
+  writeJsonFile,
+  readJsonFile,
+  generateDocument,
+  generateErrorPage,
+  generateLoadingPage,
+  baraqexRenderToString,
+  renderToString
+};
 
 console.log('Baraqex - powered by Frontend Hamroun Framework with additional utilities');
 

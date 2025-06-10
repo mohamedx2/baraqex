@@ -51,6 +51,7 @@ export class Server {
   private config: ServerConfig;
   private db: Database | null = null;
   private auth: AuthService | null = null;
+  private initialized: boolean = false;
 
   constructor(config: ServerConfig = {}) {
     this.config = {
@@ -62,10 +63,12 @@ export class Server {
       ...config
     };
 
-    this.initializeApp();
+    // Don't call initializeApp here - call it in start() instead
   }
 
   private async initializeApp() {
+    if (this.initialized) return;
+
     try {
       // Dynamic import of express to handle missing dependency
       const express = await import('express');
@@ -114,6 +117,8 @@ export class Server {
       // Add error handlers at the end
       this.app.use(notFoundHandler);
       this.app.use(errorHandler);
+      
+      this.initialized = true;
       
     } catch (error: any) {
       if (error.code === 'MODULE_NOT_FOUND' && error.message.includes('express')) {
@@ -357,7 +362,10 @@ export class Server {
     return this.auth;
   }
 
-  public start(): Promise<void> {
+  public async start(): Promise<void> {
+    // Initialize the app first if not already done
+    await this.initializeApp();
+    
     return new Promise((resolve) => {
       this.server = this.app.listen(this.config.port, () => {
         console.log(`Server running at http://localhost:${this.config.port}`);

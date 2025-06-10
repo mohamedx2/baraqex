@@ -418,8 +418,7 @@ export function App() {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  -
-                </button>
+                  -</button>
                 
                 <button
                   onClick={reset}
@@ -721,6 +720,7 @@ export function App() {
                 })
               </button>
             ))}
+
           </div>
 
           {/* Todo Items */}
