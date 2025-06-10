@@ -1,0 +1,37 @@
+{
+  "name": "fullstack-baraqex-app",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A fullstack application built with Baraqex framework",
+  "main": "server.js",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc && echo 'Build complete'",
+    "build:start": "npm run build && node dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "baraqex": "^1.0.71",
+    "dotenv": "^16.0.0",
+    "express": "^4.21.2",
+    "glob": "^11.0.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "baraqex",
+    "fullstack",
+    "typescript",
+    "express",
+    "ssr"
+  ],
+  "license": "MIT"
+}

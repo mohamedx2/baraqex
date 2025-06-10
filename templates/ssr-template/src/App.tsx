@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from 'baraqex';
 
+// JSX type declarations for TypeScript
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elemName: string]: any;
+    }
+  }
+}
+
 // Custom hooks for better code organization
 function useTimer(initialTime = 0) {
   const [time, setTime] = useState(initialTime);
@@ -10,7 +19,7 @@ function useTimer(initialTime = 0) {
     if (!isRunning) {
       setIsRunning(true);
       intervalRef.current = setInterval(() => {
-        setTime((prev) => prev + 1);
+        setTime((prev: number) => prev + 1);
       }, 1000);
     }
   };
@@ -50,10 +59,10 @@ function useTimer(initialTime = 0) {
 function useCounter(initialValue = 0, step = 1) {
   const [count, setCount] = useState(initialValue);
   
-  const increment = () => setCount((prev) => prev + step);
-  const decrement = () => setCount((prev) => prev - step);
+  const increment = () => setCount((prev: number) => prev + step);
+  const decrement = () => setCount((prev: number) => prev - step);
   const reset = () => setCount(initialValue);
-  const setValue = (value) => setCount(typeof value === 'function' ? value : value);
+  const setValue = (value: any) => setCount(typeof value === 'function' ? value : value);
 
   return { count, increment, decrement, reset, setValue };
 }
@@ -67,10 +76,10 @@ function useTodos() {
   ]);
   const [filter, setFilter] = useState('all');
 
-  const addTodo = (text) => {
+  const addTodo = (text: any) => {
     const textString = String(text || '').trim();
     if (textString) {
-      setTodos((prev) => [...prev, {
+      setTodos((prev: any) => [...prev, {
         id: Date.now(),
         text: textString,
         completed: false
@@ -78,14 +87,14 @@ function useTodos() {
     }
   };
 
-  const toggleTodo = (id) => {
-    setTodos((prev) => prev.map((todo) => 
+  const toggleTodo = (id: any) => {
+    setTodos((prev: any[]) => prev.map((todo: { id: any; completed: any; }) => 
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
     ));
   };
 
-  const deleteTodo = (id) => {
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
+  const deleteTodo = (id: any) => {
+    setTodos((prev: any[]) => prev.filter((todo: { id: any; }) => todo.id !== id));
   };
 
   const filteredTodos = useMemo(() => {
@@ -124,7 +133,7 @@ function useTheme() {
   const [theme, setTheme] = useState('light');
   
   const toggleTheme = () => {
-    setTheme((prev) => prev === 'light' ? 'dark' : 'light');
+    setTheme((prev: string) => prev === 'light' ? 'dark' : 'light');
   };
 
   const themeColors = useMemo(() => {
@@ -149,13 +158,13 @@ function useTheme() {
 }
 
 // Todo Item Component
-function TodoItem({ todo, onToggle, onDelete }) {
-  const handleToggle = (e) => {
+function TodoItem({ todo, onToggle, onDelete }: { todo: { id: number; text: string; completed: boolean; }; onToggle: (id: number) => void; onDelete: (id: number) => void; }) {
+  const handleToggle = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     onToggle(todo.id);
   };
 
-  const handleDelete = (e) => {
+  const handleDelete = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     onDelete(todo.id);
   };
@@ -199,7 +208,7 @@ function TodoItem({ todo, onToggle, onDelete }) {
 }
 
 // Stats Component
-function StatsCard({ title, value, color = '#3498db' }) {
+function StatsCard({ title, value, color = '#3498db' }: { title: string; value: string | number; color?: string }) {
   return (
     <div style={{
       background: 'white',
@@ -244,7 +253,7 @@ export function App() {
   const inputRef = useRef(null);
 
   // Handle todo form submission
-  const handleTodoSubmit = (e) => {
+  const handleTodoSubmit = (e: { preventDefault: () => void; stopPropagation: () => void; }) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -262,15 +271,15 @@ export function App() {
     }
   };
 
-  const handleNewTodoChange = (e) => {
+  const handleNewTodoChange = (e: { target: { value: any; }; }) => {
     setNewTodo(e.target.value);
   };
 
-  const handleStepChange = (e) => {
+  const handleStepChange = (e: { target: { value: string; }; }) => {
     setStep(parseInt(e.target.value) || 1);
   };
 
-  const handleSetValue = (e) => {
+  const handleSetValue = (e: { key: string; target: { value: string; }; }) => {
     if (e.key === 'Enter') {
       const value = parseInt(e.target.value) || 0;
       setValue(value);
@@ -738,7 +747,7 @@ export function App() {
                  '🎉 No completed todos yet!'}
               </div>
             ) : (
-              todos.map((todo) => (
+              todos.map((todo: { id: any; }) => (
                 <TodoItem
                   key={todo.id}
                   todo={todo}

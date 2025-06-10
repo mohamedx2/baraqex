@@ -1,6 +1,6 @@
 {
   "name": "baraqex",
-  "version": "1.0.71",
+  "version": "1.0.74",
   "description": "A powerful full-stack framework for modern web development",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -70,6 +70,7 @@
   "dependencies": {
     "chokidar": "^4.0.3",
     "frontend-hamroun": "^1.2.35",
+    "glob": "^11.0.2",
     "open": "^10.1.2",
     "ws": "^8.18.2"
   },

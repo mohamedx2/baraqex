@@ -1,7 +1,6 @@
 import path from 'path';
 import http from 'http';
 import fs from 'fs';
-import { pathToFileURL } from 'url';
 import { renderToString } from 'frontend-hamroun';
 import { Database } from './database.js';
 import { AuthService } from './auth.js';
@@ -12,6 +11,7 @@ import { requestLogger, errorHandler, notFoundHandler, rateLimit } from './middl
 import * as utils from './utils.js';
 import * as templates from './templates.js';
 import { initNodeWasm, loadGoWasmFromFile } from './wasm.js';
+import { pathToFileURL } from 'url';
 
 // Helper function to get the component name from the file path
 function getComponentName(filePath: string, pagesDir: string): string {
@@ -579,25 +579,25 @@ export { renderToString };
 
 // Ensure the default export includes all required functions
 export default {
+  Server,
+  createServer,
+  createDevServer,
+  createProductionServer,
+  rateLimit,
   requestLogger,
   errorHandler,
-  notFoundHandler,ver,
+  notFoundHandler,
   loadGoWasmFromFile,
-  // Template utilitiesger,
+  // Template utilities
   templates,
-  // Server utilitiesndHandler,
+  // Server utilities
   utils,
-  // Additional exportsities
+  // Additional exports
   renderComponent,
-  renderToString,lities
+  renderToString,
   getRequestIp,
-  parseCookies,onal exports
-  Database,ent,
-  AuthService,tring,
-  ApiRoutergetRequestIp,
-};  parseCookies,
+  parseCookies,
   Database,
-
   AuthService,
   ApiRouter
 };
