@@ -12,7 +12,7 @@ export type { GoWasmOptions, GoWasmInstance } from './server/types.js';
 const isNode = typeof process !== 'undefined' && process.versions?.node;
 const isBrowser = typeof window !== 'undefined';
 
-// Declare all server functionality variables
+// Server functionality - only load in Node.js environment
 let BaraqexServer: any = null;
 let createServer: any = null;
 let createDevServer: any = null;

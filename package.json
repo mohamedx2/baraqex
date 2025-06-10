@@ -1,6 +1,6 @@
 {
   "name": "baraqex",
-  "version": "1.0.66",
+  "version": "1.0.71",
   "description": "A powerful full-stack framework for modern web development",
   "main": "dist/index.js",
   "module": "dist/index.js",

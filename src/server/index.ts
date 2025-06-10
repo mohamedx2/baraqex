@@ -1,6 +1,7 @@
 import path from 'path';
 import http from 'http';
 import fs from 'fs';
+import { pathToFileURL } from 'url';
 import { renderToString } from 'frontend-hamroun';
 import { Database } from './database.js';
 import { AuthService } from './auth.js';
@@ -128,8 +129,19 @@ export class Server {
     }
   }
 
-  private setupApiRoutes() {
+  private async setupApiRoutes() {
     const apiRouter = new ApiRouter(this.config.apiDir!, this.auth);
+    
+    // Initialize the router properly and wait for completion
+    await apiRouter.initialize();
+    
+    // Double-check if router was created successfully
+    if (!apiRouter.isInitialized() || !apiRouter.router) {
+      console.warn('⚠️ API router not initialized properly - skipping API routes');
+      return;
+    }
+    
+    console.log('✅ Setting up API routes...');
     this.app.use('/api', requestLogger, apiRouter.router);
     
     // Add API documentation route
@@ -269,7 +281,12 @@ export class Server {
       
       // Import and render the page component
       try {
-        const pageModule = await import(pagePath);
+        // Fix the Windows ESM import issue by using pathToFileURL
+        const absolutePath = path.isAbsolute(pagePath) ? pagePath : path.resolve(pagePath);
+        const fileUrl = pathToFileURL(absolutePath).href;
+        const urlWithTimestamp = `${fileUrl}?t=${Date.now()}`;
+        
+        const pageModule = await import(urlWithTimestamp);
         if (!pageModule || !pageModule.default) {
           throw new Error(`No default export found in ${pagePath}`);
         }
@@ -562,25 +579,25 @@ export { renderToString };
 
 // Ensure the default export includes all required functions
 export default {
-  Server,
-  createServer,
-  createDevServer,
-  createProductionServer,
-  rateLimit,
   requestLogger,
   errorHandler,
-  notFoundHandler,
+  notFoundHandler,ver,
   loadGoWasmFromFile,
-  // Template utilities
+  // Template utilitiesger,
   templates,
-  // Server utilities
+  // Server utilitiesndHandler,
   utils,
-  // Additional exports
+  // Additional exportsities
   renderComponent,
-  renderToString,
+  renderToString,lities
   getRequestIp,
-  parseCookies,
+  parseCookies,onal exports
+  Database,ent,
+  AuthService,tring,
+  ApiRoutergetRequestIp,
+};  parseCookies,
   Database,
+
   AuthService,
   ApiRouter
 };
