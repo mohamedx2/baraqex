@@ -1,5 +1,5 @@
-import { jsx, useState, useEffect } from 'frontend-hamroun';
-import { loadGoWasm, callWasmFunction } from 'baraqex';
+
+import { loadGoWasm, callWasmFunction,useState, useEffect } from 'baraqex';
 
 export default function App() {
   const [wasmReady, setWasmReady] = useState(false);

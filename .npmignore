@@ -1,0 +1,67 @@
+# Development files
+src/
+*.ts
+!dist/**/*.d.ts
+tsconfig.json
+build.mjs
+.eslintrc.*
+.prettierrc.*
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+coverage/
+
+# Documentation (keep only README)
+docs/
+.github/
+CONTRIBUTING.md
+CHANGELOG.md
+
+# Development dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build artifacts
+*.log
+*.tgz
+.nyc_output
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Temporary files
+tmp/
+temp/
+
+# Examples (too large for npm package)
+examples/large-apps/
+benchmarks/
+performance-tests/
+
+# Keep only essential templates
+templates/*/node_modules/
+templates/*/dist/
+templates/*/.next/
+templates/*/build/
