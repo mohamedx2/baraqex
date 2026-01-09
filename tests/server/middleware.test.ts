@@ -211,7 +211,11 @@ describe('Server Middleware', () => {
 
     it('should handle unknown IP', () => {
       const middleware = rateLimit({ windowMs: 60000, max: 1 });
-      const req = { method: 'GET', url: '/' }; // No IP
+      const req = { 
+        method: 'GET', 
+        url: '/',
+        socket: { remoteAddress: '127.0.0.1' }
+      }; // No direct IP, but socket available
       const res = mockResponse();
       
       middleware(req as any, res, mockNext);

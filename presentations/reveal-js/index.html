@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baraqex - The Future of Web Development</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/black.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/plugin/highlight/monokai.css">
+    <style>
+        .reveal .slides section {
+            text-align: left;
+        }
+        .reveal h1, .reveal h2, .reveal h3 {
+            text-align: center;
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .demo-embed {
+            width: 100%;
+            height: 500px;
+            border: none;
+            border-radius: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            text-align: center;
+        }
+        .stat-item {
+            background: rgba(102, 126, 234, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- Title Slide -->
+            <section data-background-gradient="linear-gradient(45deg, #667eea, #764ba2)">
+                <h1 class="gradient-text">🚀 Baraqex</h1>
+                <h3>The Future of Full-Stack Web Development</h3>
+                <p>
+                    <strong>React-like hooks + Server-Side Rendering + WebAssembly</strong><br>
+                    <em>All in one powerful framework</em>
+                </p>
+                <div style="margin-top: 50px;">
+                    <small>
+                        Created by Mohamed X | Version 1.0.75<br>
+                        <a href="https://github.com/hamroun/baraqex">github.com/hamroun/baraqex</a>
+                    </small>
+                </div>
+            </section>
+
+            <!-- Problem Statement -->
+            <section>
+                <h2>😫 The Problem</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>🔧 Complex Setup</h3>
+                        <p>Multiple tools, configurations, and dependencies just to get started</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>⚡ Performance Issues</h3>
+                        <p>JavaScript limitations for heavy computations and data processing</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🌐 SSR Complexity</h3>
+                        <p>Server-side rendering setup is time-consuming and error-prone</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔄 Framework Lock-in</h3>
+                        <p>Tied to specific frameworks, hard to migrate or customize</p>
+                    </div>
+                </div>
+                <p style="text-align: center; margin-top: 30px;">
+                    <strong>What if there was a better way? 🤔</strong>
+                </p>
+            </section>
+
+            <!-- Solution Overview -->
+            <section>
+                <h2>✨ Introducing Baraqex</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>🪝 React-like Hooks</h3>
+                        <p>useState, useEffect, useRef - familiar API, zero dependencies</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🖥️ Built-in SSR</h3>
+                        <p>Server-side rendering works out of the box, no configuration needed</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>⚡ WebAssembly Power</h3>
+                        <p>Run Go functions in JavaScript for 10-100x performance boost</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🚀 Zero Config</h3>
+                        <p>Start building immediately, everything just works</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Live Demo -->
+            <section>
+                <h2>🎮 Live Demo</h2>
+                <p>Let's see Baraqex in action!</p>
+                <iframe class="demo-embed" src="https://stackblitz.com/edit/baraqex-demo?embed=1&file=src%2FApp.tsx&hideNavigation=1&theme=dark"></iframe>
+                <p style="text-align: center;">
+                    <small><a href="https://stackblitz.com/edit/baraqex-demo" target="_blank">Open in new tab →</a></small>
+                </p>
+            </section>
+
+            <!-- Performance Comparison -->
+            <section>
+                <h2>📊 Performance Comparison</h2>
+                <div style="text-align: center;">
+                    <h3>Fibonacci(40) Calculation</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">1.2s</div>
+                            <div>Pure JavaScript</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">0.08s</div>
+                            <div>Baraqex + WASM</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" style="color: #2ecc71;">15x</div>
+                            <div>Faster!</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; text-align: center;">
+                    <h3>Real-world Impact</h3>
+                    <ul style="display: inline-block; text-align: left;">
+                        <li>Image processing: <strong>7x faster</strong></li>
+                        <li>Data analysis: <strong>12x faster</strong></li>
+                        <li>Cryptographic operations: <strong>25x faster</strong></li>
+                        <li>Scientific computing: <strong>50x faster</strong></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Code Example -->
+            <section>
+                <h2>💻 Simple Code Example</h2>
+                <pre><code class="language-javascript">
+// One file, full-stack app!
+import { jsx, useState, callWasmFunction } from 'baraqex';
+
+function SuperApp() {
+  const [result, setResult] = useState(0);
+  
+  const handleCalculate = async () => {
+    // This runs Go code at near-native speed!
+    const answer = callWasmFunction('fibonacci', 1000000);
+    setResult(answer);
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;🚀 Baraqex App&lt;/h1&gt;
+      &lt;button onClick={handleCalculate}&gt;
+        Calculate Fibonacci(1M) ⚡
+      &lt;/button&gt;
+      &lt;p&gt;Result: {result}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+// SSR happens automatically! 🎉
+                </code></pre>
+                <p style="text-align: center;">
+                    <strong>That's it! No React, no complex setup, just pure performance. 🔥</strong>
+                </p>
+            </section>
+
+            <!-- Key Features Deep Dive -->
+            <section>
+                <h2>🎯 Key Features</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
+                    <div>
+                        <h3>🪝 Familiar Hooks API</h3>
+                        <pre><code class="language-javascript">
+const [count, setCount] = useState(0);
+const [data, setData] = useState(null);
+
+useEffect(() => {
+  fetchData().then(setData);
+}, []);
+
+const memoized = useMemo(() => {
+  return expensiveCalculation(data);
+}, [data]);
+                        </code></pre>
+                    </div>
+                    <div>
+                        <h3>⚡ WebAssembly Integration</h3>
+                        <pre><code class="language-javascript">
+// Load Go WASM module
+await loadGoWasm('/math.wasm');
+
+// Call Go functions directly!
+const result = callWasmFunction('complexMath', {
+  matrix: largeDataset,
+  iterations: 1000000
+});
+
+// Get results instantly ⚡
+                        </code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture -->
+            <section>
+                <h2>🏗️ Architecture Overview</h2>
+                <div style="text-align: center;">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'%3E%3Crect width='800' height='400' fill='%23f8f9fa'/%3E%3Ctext x='400' y='50' text-anchor='middle' font-size='24' font-weight='bold'%3EBaraqex Architecture%3C/text%3E%3Crect x='50' y='100' width='150' height='80' fill='%23667eea' rx='10'/%3E%3Ctext x='125' y='130' text-anchor='middle' fill='white' font-size='14'%3EFrontend%3C/text%3E%3Ctext x='125' y='150' text-anchor='middle' fill='white' font-size='14'%3E(Hooks + JSX)%3C/text%3E%3Crect x='300' y='100' width='150' height='80' fill='%23764ba2' rx='10'/%3E%3Ctext x='375' y='130' text-anchor='middle' fill='white' font-size='14'%3EBaraqex Core%3C/text%3E%3Ctext x='375' y='150' text-anchor='middle' fill='white' font-size='14'%3E(SSR + Routing)%3C/text%3E%3Crect x='550' y='100' width='150' height='80' fill='%232ecc71' rx='10'/%3E%3Ctext x='625' y='130' text-anchor='middle' fill='white' font-size='14'%3EWebAssembly%3C/text%3E%3Ctext x='625' y='150' text-anchor='middle' fill='white' font-size='14'%3E(Go Functions)%3C/text%3E%3Crect x='175' y='250' width='150' height='80' fill='%23f39c12' rx='10'/%3E%3Ctext x='250' y='280' text-anchor='middle' fill='white' font-size='14'%3EServer APIs%3C/text%3E%3Ctext x='250' y='300' text-anchor='middle' fill='white' font-size='14'%3E(Express + DB)%3C/text%3E%3Crect x='425' y='250' width='150' height='80' fill='%23e74c3c' rx='10'/%3E%3Ctext x='500' y='280' text-anchor='middle' fill='white' font-size='14'%3EBuild Tools%3C/text%3E%3Ctext x='500' y='300' text-anchor='middle' fill='white' font-size='14'%3E(ESBuild + TS)%3C/text%3E%3C/svg%3E" alt="Architecture Diagram" style="max-width: 100%; height: auto;">
+                </div>
+                <ul style="margin-top: 30px;">
+                    <li><strong>Universal rendering:</strong> Same code runs on server and client</li>
+                    <li><strong>Modular design:</strong> Use only what you need</li>
+                    <li><strong>Performance first:</strong> WASM integration for heavy lifting</li>
+                    <li><strong>Developer experience:</strong> TypeScript, hot reload, debugging tools</li>
+                </ul>
+            </section>
+
+            <!-- Use Cases -->
+            <section>
+                <h2>🎯 Perfect For</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>📊 Data Analytics Apps</h3>
+                        <p>Process large datasets with WASM performance</p>
+                        <small>Example: Real-time financial dashboards</small>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎮 Browser Games</h3>
+                        <p>60fps performance with Go-powered game logic</p>
+                        <small>Example: Multiplayer strategy games</small>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔬 Scientific Computing</h3>
+                        <p>Complex calculations in the browser</p>
+                        <small>Example: Climate modeling tools</small>
+                    </div>
+                    <div class="feature-card">
+                        <h3>💼 Enterprise Apps</h3>
+                        <p>Full-stack applications with SSR and performance</p>
+                        <small>Example: CRM and ERP systems</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Getting Started -->
+            <section>
+                <h2>🚀 Getting Started</h2>
+                <div style="text-align: center;">
+                    <h3>Three ways to start building:</h3>
+                    <div class="stats-grid">
+                        <div class="feature-card">
+                            <h4>🎮 Interactive Tutorial</h4>
+                            <p>Learn by building in your browser</p>
+                            <a href="https://learn.baraqex.tech" target="_blank">learn.baraqex.tech →</a>
+                        </div>
+                        <div class="feature-card">
+                            <h4>⚡ Quick Start</h4>
+                            <pre style="font-size: 0.8em;"><code>npx create-baraqex-app my-app</code></pre>
+                        </div>
+                        <div class="feature-card">
+                            <h4>📺 Video Course</h4>
+                            <p>Step-by-step video tutorials</p>
+                            <a href="https://youtube.com/baraqex" target="_blank">YouTube Channel →</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Roadmap -->
+            <section>
+                <h2>🗺️ Roadmap</h2>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
+                    <div>
+                        <h3>✅ Current (v1.0)</h3>
+                        <ul>
+                            <li>React-like hooks</li>
+                            <li>Server-side rendering</li>
+                            <li>Go WebAssembly integration</li>
+                            <li>TypeScript support</li>
+                            <li>File-based routing</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>🚧 Coming Soon (v1.1-1.2)</h3>
+                        <ul>
+                            <li>🔄 Real-time updates (WebSockets)</li>
+                            <li>📱 Mobile app templates</li>
+                            <li>🎨 Component library</li>
+                            <li>🔧 Visual debugging tools</li>
+                            <li>☁️ One-click deployment</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <h3>🌟 Long-term Vision</h3>
+                    <p>The React of WebAssembly - making high-performance web development accessible to everyone</p>
+                </div>
+            </section>
+
+            <!-- Community -->
+            <section>
+                <h2>🌍 Join the Community</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>💬 Discord</h3>
+                        <p>Real-time help and discussions</p>
+                        <a href="https://discord.gg/baraqex" target="_blank">Join Chat →</a>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🐙 GitHub</h3>
+                        <p>Contribute, report issues, star the repo</p>
+                        <a href="https://github.com/hamroun/baraqex" target="_blank">View Source →</a>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🐦 Twitter</h3>
+                        <p>Latest updates and tips</p>
+                        <a href="https://twitter.com/baraqexjs" target="_blank">Follow @baraqexjs →</a>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📧 Newsletter</h3>
+                        <p>Monthly updates and tutorials</p>
+                        <a href="https://baraqex.tech/newsletter" target="_blank">Subscribe →</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Call to Action -->
+            <section data-background-gradient="linear-gradient(45deg, #667eea, #764ba2)">
+                <div style="text-align: center;">
+                    <h1>🚀 Ready to Build the Future?</h1>
+                    <p style="font-size: 1.5em; margin: 40px 0;">
+                        Start building with Baraqex today!
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 40px 0;">
+                        <a href="https://learn.baraqex.tech" style="background: white; color: #667eea; padding: 20px; border-radius: 10px; text-decoration: none; font-weight: bold; display: block;">
+                            🎮 Try Interactive Tutorial
+                        </a>
+                        <a href="https://github.com/hamroun/baraqex" style="background: rgba(255,255,255,0.2); color: white; padding: 20px; border-radius: 10px; text-decoration: none; font-weight: bold; display: block;">
+                            ⭐ Star on GitHub
+                        </a>
+                        <a href="https://discord.gg/baraqex" style="background: rgba(255,255,255,0.2); color: white; padding: 20px; border-radius: 10px; text-decoration: none; font-weight: bold; display: block;">
+                            💬 Join Discord
+                        </a>
+                    </div>
+                    <p style="margin-top: 40px;">
+                        <strong>Questions? Let's discuss!</strong><br>
+                        <small>Created with ❤️ by Mohamed X and the Baraqex community</small>
+                    </p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/plugin/notes/notes.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/plugin/markdown/markdown.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/plugin/highlight/highlight.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            transitionSpeed: 'fast',
+            backgroundTransition: 'fade',
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+        });
+    </script>
+</body>
+</html>
