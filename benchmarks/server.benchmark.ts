@@ -3,16 +3,20 @@
  * Tests the performance of Server initialization, startup, shutdown, and memory usage
  */
 
-import { describe, it, expect } from '@jest/globals';
-import { Server } from '../src/server/index';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { Server, ServerConfig } from '../src/server/index';
 
 describe('Server Performance Benchmarks', () => {
   let server: Server;
+  
+  // Default server config for testing
+  const devConfig: ServerConfig = { port: 3001 };
+  const prodConfig: ServerConfig = { port: 3002 };
 
   describe('Server Creation Performance', () => {
     it('should create a dev server in < 100ms', () => {
       const startTime = performance.now();
-      server = new Server({ isDev: true });
+      server = new Server(devConfig);
       const duration = performance.now() - startTime;
 
       expect(duration).toBeLessThan(100);
@@ -21,7 +25,7 @@ describe('Server Performance Benchmarks', () => {
 
     it('should create a production server in < 100ms', () => {
       const startTime = performance.now();
-      server = new Server({ isDev: false });
+      server = new Server(prodConfig);
       const duration = performance.now() - startTime;
 
       expect(duration).toBeLessThan(100);
@@ -31,7 +35,7 @@ describe('Server Performance Benchmarks', () => {
 
   describe('Server Startup Performance', () => {
     beforeEach(() => {
-      server = new Server({ isDev: true });
+      server = new Server({ port: 3003 });
     });
 
     afterEach(async () => {
@@ -52,7 +56,7 @@ describe('Server Performance Benchmarks', () => {
 
   describe('Server Shutdown Performance', () => {
     beforeEach(async () => {
-      server = new Server({ isDev: true });
+      server = new Server({ port: 3004 });
       await server.start();
     }, 15000);
 
@@ -68,7 +72,7 @@ describe('Server Performance Benchmarks', () => {
 
   describe('Server Restart Performance', () => {
     beforeEach(async () => {
-      server = new Server({ isDev: true });
+      server = new Server({ port: 3005 });
       await server.start();
     }, 15000);
 
@@ -81,7 +85,7 @@ describe('Server Performance Benchmarks', () => {
     it('should restart a server in < 1500ms', async () => {
       const startTime = performance.now();
       await server.stop();
-      server = new Server({ isDev: true });
+      server = new Server({ port: 3006 });
       await server.start();
       const duration = performance.now() - startTime;
 
@@ -97,7 +101,7 @@ describe('Server Performance Benchmarks', () => {
 
       // Create 5 servers
       for (let i = 0; i < 5; i++) {
-        servers.push(new Server({ isDev: true }));
+        servers.push(new Server({ port: 3010 + i }));
       }
 
       const finalMemory = process.memoryUsage().heapUsed / 1024 / 1024;

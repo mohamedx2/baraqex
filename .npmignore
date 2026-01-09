@@ -61,7 +61,15 @@ benchmarks/
 performance-tests/
 
 # Keep only essential templates
-templates/*/node_modules/
-templates/*/dist/
-templates/*/.next/
-templates/*/build/
+templates/**/node_modules/
+templates/**/dist/
+templates/**/.next/
+templates/**/build/
+templates/**/package-lock.json
+templates/wasm/public/*.wasm
+
+# Try folder (development experiments)
+try/
+
+# Presentations
+presentations/

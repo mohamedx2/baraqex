@@ -1,7 +1,7 @@
 {
   "name": "baraqex",
-  "version": "1.0.76",
-  "description": "A powerful full-stack framework for modern web development",
+  "version": "2.0.0",
+  "description": "⚡ A blazing-fast full-stack framework with WASM superpowers. Build universal apps with React-like syntax and Go-powered performance.",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,7 +20,8 @@
     "./server": {
       "import": "./dist/server.js",
       "types": "./dist/server.d.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "browser": {
     "./dist/index.js": "./dist/browser.js",
@@ -37,43 +38,101 @@
     "bcryptjs": false,
     "jsonwebtoken": false
   },
+  "sideEffects": false,
   "files": [
     "dist/",
-    "templates/",
     "bin/",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "templates/basic-app/",
+    "templates/fullstack-template/",
+    "templates/ssr-template/",
+    "templates/wasm/",
+    "!templates/**/node_modules/",
+    "!templates/**/dist/",
+    "!templates/**/package-lock.json",
+    "!templates/wasm/public/*.wasm"
   ],
   "bin": {
     "baraqex": "./bin/baraqex.js"
   },
   "scripts": {
-    "build": "npm run clean && npm run build:esm",
+    "build": "npm run clean && npm run build:esm && npm run build:types",
     "build:types": "tsc --emitDeclarationOnly",
     "build:esm": "node build.mjs",
     "clean": "rimraf dist",
     "test": "jest",
+    "test:unit": "jest tests/server --coverage",
+    "test:integration": "jest tests/server/integration.test.ts",
     "test:coverage": "jest --coverage",
-    "test:coverage:report": "jest --coverage && open coverage/lcov-report/index.html",
+    "test:coverage:report": "jest --coverage && start coverage/lcov-report/index.html",
     "test:watch": "jest --watch",
     "test:benchmarks": "jest benchmarks --verbose",
+    "test:ci": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "typecheck": "tsc --noEmit",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run test && npm run build",
+    "prepare": "npm run build",
+    "release": "npm run test && npm run build && npm publish",
+    "release:beta": "npm run test && npm run build && npm publish --tag beta",
+    "docs": "typedoc --out docs src/index.ts",
+    "size": "size-limit",
+    "benchmark": "jest benchmarks --verbose"
   },
   "keywords": [
+    "baraqex",
+    "frontend-hamroun",
     "framework",
+    "fullstack",
     "frontend",
     "backend",
-    "fullstack",
     "react",
+    "jsx",
     "ssr",
+    "server-side-rendering",
     "wasm",
-    "go"
+    "webassembly",
+    "go",
+    "golang",
+    "typescript",
+    "javascript",
+    "express",
+    "api",
+    "rest",
+    "web",
+    "app",
+    "universal",
+    "isomorphic",
+    "virtual-dom",
+    "hooks",
+    "arabic"
   ],
-  "author": "Mohamed X",
+  "author": {
+    "name": "Mohamed X",
+    "url": "https://github.com/mohamedx2"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohamedx2/baraqex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mohamedx2/baraqex/issues"
+  },
+  "homepage": "https://www.baraqex.tech",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/mohamedx2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "dependencies": {
     "chokidar": "^4.0.3",
-    "frontend-hamroun": "^1.2.35",
     "glob": "^11.0.2",
     "open": "^10.1.2",
     "ws": "^8.18.2"

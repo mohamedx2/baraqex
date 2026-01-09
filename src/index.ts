@@ -1,5 +1,5 @@
-// Re-export everything from frontend-hamroun
-export * from 'frontend-hamroun';
+// Re-export everything from core (standalone, no external dependencies)
+export * from './core/index.js';
 
 // Export type definitions (safe for all environments)
 export type { ServerConfig, User, DbConfig, MiddlewareFunction } from './server/types.js';
@@ -195,5 +195,5 @@ export {
   renderToString
 };
 
-console.log('Baraqex - powered by Frontend Hamroun Framework with additional utilities');
+// Baraqex - Standalone Full-Stack Framework
 

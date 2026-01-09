@@ -37,18 +37,29 @@ npm run test:watch
 
 Runs tests in watch mode for development.
 
-## Coverage Thresholds
+## Current Coverage Status
 
-The project enforces minimum coverage thresholds:
+| Metric | Current | Threshold | Target |
+|--------|---------|-----------|--------|
+| Branches | 45.71% | 30% | 70% |
+| Functions | 62.12% | 45% | 80% |
+| Lines | 55.92% | 40% | 80% |
+| Statements | 56.66% | 40% | 80% |
 
-| Metric | Threshold |
-|--------|-----------|
-| Branches | 50% |
-| Functions | 60% |
-| Lines | 60% |
-| Statements | 60% |
+**Test Status**: ✅ 140 tests passing (10 test suites)
 
-Tests fail if coverage falls below these thresholds.
+### Module-Specific Coverage
+
+| Module | Statements | Branches | Functions | Status |
+|--------|------------|----------|-----------|--------|
+| server/utils | 100% | 96.29% | 100% | ✅ Done |
+| server/middleware | 100% | 87.5% | 100% | ✅ Done |
+| server/templates | 90.62% | 81.08% | 77.77% | ✅ Done |
+| server/auth | 80.76% | 70.58% | 100% | ✅ Done |
+| server/wasm | 58% | 43.33% | 41.66% | 🔄 In Progress |
+| server/index | 46.01% | 14.81% | 46.93% | 🔄 In Progress |
+| server/database | 31.34% | 35% | 53.84% | 🔄 In Progress |
+| server/api-router | 28.78% | 20% | 35.71% | 🔄 In Progress |
 
 ## Reading Coverage Reports
 

@@ -1,7 +1,7 @@
 import path from 'path';
 import http from 'http';
 import fs from 'fs';
-import { renderToString } from 'frontend-hamroun';
+import { renderToString } from '../core/server-renderer.js';
 import { Database } from './database.js';
 import { AuthService } from './auth.js';
 import { ApiRouter } from './api-router.js';

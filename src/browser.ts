@@ -3,8 +3,8 @@
  * This file is used when building for the browser
  */
 
-// Re-export everything from frontend-hamroun for browser usage
-export * from 'frontend-hamroun';
+// Re-export everything from core for browser usage (standalone, no external dependencies)
+export * from './core/index.js';
 
 // Export WASM functionality (browser-only functions)
 export { loadGoWasm, callWasmFunction, isWasmReady, getWasmFunctions, useGoWasm } from './wasm.js';

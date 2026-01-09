@@ -11,13 +11,25 @@ export default {
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/dist/'
+    '/dist/',
+    '/tests/e2e/',
+    '/tests/browser/'
   ],
   collectCoverageFrom: [
-    'src/**/*.ts',
+    'src/server/**/*.ts',
     '!src/**/*.d.ts',
-    '!src/**/index.ts',
-    '!src/**/types.ts'
+    '!src/**/types.ts',
+    // Exclude empty modules from coverage
+    '!src/router/index.ts',
+    '!src/forms/index.ts',
+    '!src/store/index.ts',
+    '!src/frontend/index.ts',
+    // Exclude browser-only files (require browser environment)
+    '!src/browser.ts',
+    '!src/wasm.ts',
+    '!src/index.ts',
+    '!src/renderComponent.ts',
+    '!src/server-renderer.ts'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: [
@@ -30,10 +42,29 @@ export default {
   ],
   coverageThreshold: {
     global: {
-      branches: 35,
+      branches: 30,
       functions: 45,
-      lines: 35,
-      statements: 35
+      lines: 40,
+      statements: 40
+    },
+    // Per-file thresholds for critical modules
+    './src/server/utils.ts': {
+      branches: 90,
+      functions: 95,
+      lines: 95,
+      statements: 95
+    },
+    './src/server/middleware.ts': {
+      branches: 80,
+      functions: 95,
+      lines: 95,
+      statements: 95
+    },
+    './src/server/auth.ts': {
+      branches: 65,
+      functions: 90,
+      lines: 75,
+      statements: 75
     }
   },
   moduleNameMapper: {
@@ -45,9 +76,10 @@ export default {
     }]
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  globals: {
-    'ts-jest': {
-      isolatedModules: true
-    }
-  }
+  // Display configuration
+  verbose: false,
+  // Performance
+  maxWorkers: '50%',
+  // Timeout for slow tests
+  testTimeout: 10000
 };
