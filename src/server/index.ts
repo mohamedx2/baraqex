@@ -110,7 +110,7 @@ export class Server {
       }
       
       // Setup API routes
-      this.setupApiRoutes();
+      await this.setupApiRoutes();
       
       // Setup page routes (for SSR)
       this.setupPageRoutes();
@@ -427,8 +427,8 @@ export class Server {
       if (!fs.existsSync(clientJsPath)) {
         const clientJsContent = `
           // Auto-generated hydration script
-          import { hydrate } from 'frontend-hamroun';
-          
+          import { hydrate } from 'baraqex';
+
           // Find SSR content and hydrate it
           document.addEventListener('DOMContentLoaded', () => {
             const ssrRoots = document.querySelectorAll('[data-ssr-root]');

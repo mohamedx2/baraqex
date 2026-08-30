@@ -26,7 +26,7 @@ export function generateDocument(
   options: DocumentOptions = {}
 ): string {
   const {
-    title = 'Frontend Hamroun App',
+    title = 'Baraqex App',
     description = '',
     lang = 'en',
     charset = 'UTF-8',

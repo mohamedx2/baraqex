@@ -165,11 +165,11 @@ function fixDeclarationFiles() {
   } else {
     console.warn('⚠️ Browser declaration file not found, creating fallback...');
     // Create a fallback declaration file
-    const browserDeclaration = `export * from 'frontend-hamroun';
+    const browserDeclaration = `export * from './core/index.js';
 export { loadGoWasm, callWasmFunction, isWasmReady, getWasmFunctions, useGoWasm } from './wasm';
 export type { GoWasmOptions, GoWasmInstance } from './wasm';
 export { generateDocument, generateErrorPage, generateLoadingPage } from './server/templates';
-export function renderToString(content: any): Promise<string>;
+export function renderToString(content: any): string;
 export function generateToken(length?: number): string;
 export function safeJsonParse<T>(json: string, fallback: T): T;
 export const isBrowser: boolean;

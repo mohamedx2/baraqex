@@ -1,13 +1,12 @@
 /**
- * Baraqex Core - Standalone Frontend Framework
- * 
- * A React-like framework with virtual DOM, hooks, SSR, and routing.
- * Built with ❤️ for the Arabic developer community.
+ * Baraqex Core — Standalone Frontend Framework
+ *
+ * A reactive framework with virtual DOM, hooks, SSR, and routing.
  */
 
 // Core Virtual DOM
-export { 
-  VNode, 
+export {
+  VNode,
   Component as ComponentType,
   FC,
   RefObject,
@@ -19,7 +18,7 @@ export {
 export { batchUpdates, getIsBatching } from './batch.js';
 
 // Context API
-export { createContext, useContext } from './context.js';
+export { createContext, useContext, getContextValue, Context } from './context.js';
 
 // Hooks
 export {
@@ -34,7 +33,12 @@ export {
   useId,
   prepareRender,
   finishRender,
-  cleanupHooks
+  cleanupHooks,
+  cleanupRoot,
+  createRootState,
+  setCurrentRoot,
+  getCurrentRoot,
+  type RootState
 } from './hooks.js';
 
 // JSX Runtime
@@ -52,7 +56,7 @@ export {
   render,
   hydrate,
   createRoot,
-  getIsHydrating
+  hasRoot
 } from './renderer.js';
 
 // Server Renderer
@@ -138,6 +142,45 @@ export {
   Middleware
 } from './store.js';
 
+// Lifecycle Events
+export {
+  LifecycleEvents,
+  emitAppInit,
+  emitAppMounted,
+  emitAppUpdated,
+  emitAppError,
+  emitAppDestroyed,
+  emitComponentCreated,
+  emitComponentMounted,
+  emitComponentUpdated,
+  emitComponentError,
+  emitComponentUnmounted,
+  emitRouterBeforeChange,
+  emitRouterAfterChange,
+  emitRouterError,
+  emitStoreInitialized,
+  emitStoreBeforeAction,
+  emitStoreAfterAction,
+  emitStoreError,
+  onAppInit,
+  onAppMounted,
+  onAppUpdated,
+  onAppError,
+  onAppDestroyed,
+  onComponentCreated,
+  onComponentMounted,
+  onComponentUpdated,
+  onComponentError,
+  onComponentUnmounted,
+  onRouterBeforeChange,
+  onRouterAfterChange,
+  onRouterError,
+  onStoreInitialized,
+  onStoreBeforeAction,
+  onStoreAfterAction,
+  onStoreError
+} from './lifecycle-events.js';
+
 // Utilities
 export {
   debounce,
@@ -165,6 +208,18 @@ export {
   get,
   set
 } from './utils.js';
+
+// Errors
+export {
+  BaraqexError,
+  ConfigError,
+  DatabaseError,
+  AuthError,
+  RouterError,
+  WasmError,
+  ValidationError,
+  withErrorHandling
+} from './errors.js';
 
 // Re-export types
 export * from './types.js';

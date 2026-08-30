@@ -1,26 +1,29 @@
-import { Request, Response, NextFunction } from 'express';
+/**
+ * Express middleware utilities
+ */
 
 export interface MiddlewareFunction {
   (req: any, res: any, next: any): void | Promise<void>;
 }
 
-// Common middleware functions
 export const requestLogger: MiddlewareFunction = (req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
 };
 
 export const errorHandler = (
-  err: Error, 
-  req: any, 
-  res: any, 
-  next: any
+  err: Error,
+  req: any,
+  res: any,
+  _next: any
 ) => {
   console.error(err.stack);
   res.status(500).json({
     error: {
       message: 'Internal Server Error',
-      ...(process.env.NODE_ENV !== 'production' ? { details: err.message, stack: err.stack } : {})
+      ...(process.env.NODE_ENV !== 'production'
+        ? { details: err.message, stack: err.stack }
+        : {})
     }
   });
 };
@@ -33,23 +36,43 @@ export const notFoundHandler = (req: any, res: any) => {
   });
 };
 
-// Middleware for rate limiting
+/**
+ * Rate limiting middleware with automatic cleanup.
+ *
+ * Uses a sliding-window counter per IP. Old entries are pruned on every
+ * request and a periodic interval cleans up idle IPs.
+ */
 export function rateLimit(options: { windowMs: number; max: number }) {
   const requests = new Map<string, number[]>();
-  
-  return (req: any, res: any, next: any) => {
-    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+
+  // Periodic cleanup to prevent memory leak from abandoned IPs
+  const cleanupInterval = setInterval(() => {
     const now = Date.now();
-    
-    // Get existing requests and filter out old ones
+    for (const [ip, times] of requests) {
+      const valid = times.filter(t => now - t < options.windowMs);
+      if (valid.length === 0) {
+        requests.delete(ip);
+      } else {
+        requests.set(ip, valid);
+      }
+    }
+  }, options.windowMs);
+
+  // Allow the timer to not keep the process alive
+  if (cleanupInterval.unref) {
+    cleanupInterval.unref();
+  }
+
+  return (req: any, res: any, next: any) => {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    const now = Date.now();
+
     const reqTimes = (requests.get(ip) || [])
       .filter(time => now - time < options.windowMs);
-    
-    // Add current request
+
     reqTimes.push(now);
     requests.set(ip, reqTimes);
-    
-    // Check if too many requests
+
     if (reqTimes.length > options.max) {
       return res.status(429).json({
         error: {
@@ -58,7 +81,7 @@ export function rateLimit(options: { windowMs: number; max: number }) {
         }
       });
     }
-    
+
     return next();
   };
 }

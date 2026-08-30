@@ -303,9 +303,46 @@ export function Redirect({
 }
 
 /**
- * NavLink component - Link with active state styling
+ * NavLink component — Link with automatic active class.
+ * Defaults to "active" class when the link matches the current path.
  */
-export const NavLink = Link;
+export function NavLink({
+  to,
+  children,
+  activeClassName = 'active',
+  className = '',
+  exact = false,
+  ...rest
+}: {
+  to: string;
+  children: any;
+  activeClassName?: string;
+  className?: string;
+  exact?: boolean;
+  [key: string]: any;
+}): VNode {
+  const { pathname, navigate } = useContext(RouterContext);
+  const { match } = matchPath(pathname, to, exact);
+  const isActive = match;
+
+  const combinedClassName = isActive
+    ? `${className} ${activeClassName}`.trim()
+    : className;
+
+  const handleClick = (e: MouseEvent) => {
+    e.preventDefault();
+    navigate(to);
+  };
+
+  return jsx('a', {
+    href: to,
+    onClick: handleClick,
+    className: combinedClassName || undefined,
+    'aria-current': isActive ? 'page' : undefined,
+    ...rest,
+    children
+  });
+}
 
 // Hooks
 export function useRouter(): RouterContextValue {

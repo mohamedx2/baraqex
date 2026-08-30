@@ -119,7 +119,7 @@ export async function loadGoWasmFromFile(
     
     // Load WASM binary
     const wasmBuffer = await fs.readFile(wasmFilePath);
-    const wasmModule = await WebAssembly.compile(wasmBuffer);
+    const wasmModule = await WebAssembly.compile(new Uint8Array(wasmBuffer));
     
     // The updated wasm_exec.js provides imports under 'gojs' instead of 'go'
     // Create imports object with the correct structure

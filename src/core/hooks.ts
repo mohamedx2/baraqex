@@ -1,191 +1,268 @@
 /**
- * React-like Hooks Implementation
+ * Hooks Implementation
+ *
+ * Each render root maintains its own isolated state via a RootState object.
+ * The module-level currentRoot/currentComponentId/hookIndex are set before
+ * each render call so hooks can find their data.
  */
 
 import { createContext, useContext } from './context.js';
 
-// Current render ID counter
-let currentRender = 0;
+// ---------------------------------------------------------------------------
+// Root-scoped state store
+// ---------------------------------------------------------------------------
 
-// State storage
-const states = new Map<number, any[]>();
-const stateIndices = new Map<number, number>();
-const effects = new Map<number, { callback: () => void | (() => void); deps?: any[]; cleanup?: () => void }[]>();
-const memos = new Map<number, { value: any; deps?: any[] }[]>();
-const refs = new Map<number, { current: any }[]>();
-
-// Server-side rendering detection
-const isServer = typeof window === 'undefined';
-const serverStates = new Map<number, Map<number, any>>();
-
-// Rendering callbacks
-let globalRenderCallback: any = null;
-let globalContainer: any = null;
-let currentElement: any = null;
-
-export function setRenderCallback(callback: any, element: any, container: any): void {
-  globalRenderCallback = callback;
-  globalContainer = container;
-  currentElement = element;
+export interface ComponentState {
+  states: any[];
+  effects: { callback: () => void | (() => void); deps?: any[]; cleanup?: () => void }[];
+  memos: { value: any; deps?: any[] }[];
+  refs: { current: any }[];
 }
 
-export function prepareRender(): number {
-  currentRender++;
-  stateIndices.set(currentRender, 0);
-  return currentRender;
+export interface RootState {
+  id: number;
+  components: Map<number, ComponentState>;
+  nextComponentId: number;
+  renderCallback: ((element: any, container: HTMLElement) => Promise<void>) | null;
+  container: HTMLElement | null;
+  currentElement: any;
+}
+
+let rootIdCounter = 0;
+
+export function createRootState(): RootState {
+  return {
+    id: ++rootIdCounter,
+    components: new Map(),
+    nextComponentId: 0,
+    renderCallback: null,
+    container: null,
+    currentElement: null
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Current render context (set per render call)
+// ---------------------------------------------------------------------------
+
+let currentRoot: RootState | null = null;
+let currentComponentId: number | null = null;
+let hookIndex = 0;
+
+const isServer = typeof window === 'undefined';
+
+// ---------------------------------------------------------------------------
+// Render lifecycle helpers
+// ---------------------------------------------------------------------------
+
+export function prepareRender(root?: RootState, componentId?: number): number {
+  if (root) {
+    currentRoot = root;
+  }
+  if (componentId !== undefined) {
+    currentComponentId = componentId;
+  } else if (currentRoot) {
+    currentComponentId = ++currentRoot.nextComponentId;
+  }
+  hookIndex = 0;
+  return currentComponentId || 0;
 }
 
 export function finishRender(): void {
-  if (isServer) {
-    serverStates.delete(currentRender);
+  currentComponentId = null;
+}
+
+export function getCurrentRoot(): RootState | null {
+  return currentRoot;
+}
+
+export function setCurrentRoot(root: RootState | null): void {
+  currentRoot = root;
+}
+
+export function getComponentState(root: RootState, compId: number): ComponentState {
+  let state = root.components.get(compId);
+  if (!state) {
+    state = { states: [], effects: [], memos: [], refs: [] };
+    root.components.set(compId, state);
   }
-  currentRender = 0;
+  return state;
+}
+
+// ---------------------------------------------------------------------------
+// setRenderCallback — bind a root to a re-render function
+// ---------------------------------------------------------------------------
+
+export function setRenderCallback(
+  callback: (element: any, container: HTMLElement) => Promise<void>,
+  element: any,
+  container: HTMLElement
+): void {
+  if (!currentRoot) return;
+  currentRoot.renderCallback = callback;
+  currentRoot.currentElement = element;
+  currentRoot.container = container;
 }
 
 export function getCurrentRender(): number {
-  return currentRender;
+  return currentComponentId || 0;
 }
 
+// ---------------------------------------------------------------------------
+// Hooks
+// ---------------------------------------------------------------------------
+
 /**
- * useState hook - manages component state
+ * useState — manages component state
  */
 export function useState<T>(initial: T): [T, (newValue: T | ((prev: T) => T)) => void] {
-  if (!currentRender) {
+  const root = currentRoot;
+  const compId = currentComponentId;
+
+  if (!root || compId === null) {
+    if (isServer) {
+      // During SSR, return the initial value with a no-op setter
+      return [initial, () => {}];
+    }
     console.warn('useState called outside of render context');
     return [initial, () => {}];
   }
 
-  // Handle server-side rendering separately
-  if (isServer) {
-    if (!serverStates.has(currentRender)) {
-      serverStates.set(currentRender, new Map());
-    }
-    const stateMap = serverStates.get(currentRender)!;
-    const index = stateIndices.get(currentRender) || 0;
-    stateIndices.set(currentRender, index + 1);
+  const compState = getComponentState(root, compId);
+  const currentIndex = hookIndex;
+  hookIndex++;
 
-    if (!stateMap.has(index)) {
-      stateMap.set(index, initial);
-    }
-
-    const state = stateMap.get(index);
-    const setState = (newValue: T | ((prev: T) => T)) => {
-      const value = typeof newValue === 'function' 
-        ? (newValue as (prev: T) => T)(stateMap.get(index))
-        : newValue;
-      stateMap.set(index, value);
-    };
-
-    return [state, setState];
+  if (currentIndex >= compState.states.length) {
+    compState.states.push(initial);
   }
 
-  // Client-side implementation
-  if (!states.has(currentRender)) {
-    states.set(currentRender, []);
-  }
-  
-  const componentStates = states.get(currentRender)!;
-  const index = stateIndices.get(currentRender) || 0;
-  
-  if (index >= componentStates.length) {
-    componentStates.push(initial);
-  }
-  
-  const state = componentStates[index];
-  const rendererId = currentRender;
-  
+  const state = compState.states[currentIndex];
+
   const setState = (newValue: T | ((prev: T) => T)) => {
-    const currentStates = states.get(rendererId);
-    if (!currentStates) return;
-    
-    const currentState = currentStates[index];
-    const value = typeof newValue === 'function' 
+    const currentState = compState.states[currentIndex];
+    const value = typeof newValue === 'function'
       ? (newValue as (prev: T) => T)(currentState)
       : newValue;
-    
+
     if (Object.is(currentState, value)) return;
-    
-    currentStates[index] = value;
-    rerender(rendererId);
+
+    compState.states[currentIndex] = value;
+
+    // Trigger re-render via root's callback
+    if (root.renderCallback && root.container && root.currentElement) {
+      root.renderCallback(root.currentElement, root.container);
+    }
   };
-  
-  stateIndices.set(currentRender, index + 1);
+
   return [state, setState];
 }
 
 /**
- * useEffect hook - handles side effects
+ * useEffect — handles side effects, runs after render
  */
 export function useEffect(callback: () => void | (() => void), deps?: any[]): void {
-  if (!currentRender || isServer) return;
-  
-  if (!effects.has(currentRender)) {
-    effects.set(currentRender, []);
-  }
-  
-  const componentEffects = effects.get(currentRender)!;
-  const index = componentEffects.length;
-  const prevEffect = componentEffects[index];
-  
-  // Check if deps changed
-  const shouldRun = !prevEffect || !deps || !prevEffect.deps || 
+  const root = currentRoot;
+  const compId = currentComponentId;
+  if (!root || compId === null || isServer) return;
+
+  const compState = getComponentState(root, compId);
+  const currentIndex = hookIndex;
+  hookIndex++;
+
+  const prevEffect = compState.effects[currentIndex];
+
+  const shouldRun = !prevEffect || !deps || !prevEffect.deps ||
     deps.some((dep, i) => !Object.is(dep, prevEffect.deps?.[i]));
-  
+
   if (shouldRun) {
-    // Run cleanup from previous effect
     if (prevEffect?.cleanup) {
       prevEffect.cleanup();
     }
-    
-    // Schedule effect to run after render
+
     queueMicrotask(() => {
       const cleanup = callback();
-      componentEffects[index] = {
+      compState.effects[currentIndex] = {
         callback,
         deps,
         cleanup: typeof cleanup === 'function' ? cleanup : undefined
       };
     });
   }
-  
+
   if (!prevEffect) {
-    componentEffects.push({ callback, deps });
+    compState.effects.push({ callback, deps });
   }
 }
 
 /**
- * useMemo hook - memoizes expensive computations
+ * useLayoutEffect — runs synchronously after DOM mutations (client only)
+ */
+export function useLayoutEffect(callback: () => void | (() => void), deps?: any[]): void {
+  if (isServer) return;
+
+  const root = currentRoot;
+  const compId = currentComponentId;
+  if (!root || compId === null) return;
+
+  const compState = getComponentState(root, compId);
+  const currentIndex = hookIndex;
+  hookIndex++;
+
+  const prevEffect = compState.effects[currentIndex];
+
+  const shouldRun = !prevEffect || !deps || !prevEffect.deps ||
+    deps.some((dep, i) => !Object.is(dep, prevEffect.deps?.[i]));
+
+  if (shouldRun) {
+    if (prevEffect?.cleanup) {
+      prevEffect.cleanup();
+    }
+
+    // Run synchronously (unlike useEffect which uses queueMicrotask)
+    const cleanup = callback();
+    compState.effects[currentIndex] = {
+      callback,
+      deps,
+      cleanup: typeof cleanup === 'function' ? cleanup : undefined
+    };
+  }
+
+  if (!prevEffect) {
+    compState.effects.push({ callback, deps });
+  }
+}
+
+/**
+ * useMemo — memoizes expensive computations
  */
 export function useMemo<T>(factory: () => T, deps?: any[]): T {
-  if (!currentRender) {
+  const root = currentRoot;
+  const compId = currentComponentId;
+
+  if (!root || compId === null) {
     return factory();
   }
-  
-  if (!memos.has(currentRender)) {
-    memos.set(currentRender, []);
-  }
-  
-  const componentMemos = memos.get(currentRender)!;
-  const index = stateIndices.get(currentRender) || 0;
-  stateIndices.set(currentRender, index + 1);
-  
-  const prevMemo = componentMemos[index];
-  
-  // Check if deps changed
+
+  const compState = getComponentState(root, compId);
+  const currentIndex = hookIndex;
+  hookIndex++;
+
+  const prevMemo = compState.memos[currentIndex];
+
   const shouldRecalculate = !prevMemo || !deps || !prevMemo.deps ||
     deps.some((dep, i) => !Object.is(dep, prevMemo.deps?.[i]));
-  
+
   if (shouldRecalculate) {
     const value = factory();
-    componentMemos[index] = { value, deps };
+    compState.memos[currentIndex] = { value, deps };
     return value;
   }
-  
+
   return prevMemo.value;
 }
 
 /**
- * useCallback hook - memoizes callbacks
+ * useCallback — memoizes callbacks
  */
 export function useCallback<T extends (...args: any[]) => any>(
   callback: T,
@@ -195,57 +272,45 @@ export function useCallback<T extends (...args: any[]) => any>(
 }
 
 /**
- * useRef hook - creates a mutable ref object
+ * useRef — creates a mutable ref object
  */
 export function useRef<T>(initial: T): { current: T } {
-  if (!currentRender) {
+  const root = currentRoot;
+  const compId = currentComponentId;
+
+  if (!root || compId === null) {
     return { current: initial };
   }
-  
-  if (!refs.has(currentRender)) {
-    refs.set(currentRender, []);
+
+  const compState = getComponentState(root, compId);
+  const currentIndex = hookIndex;
+  hookIndex++;
+
+  if (compState.refs[currentIndex] === undefined) {
+    compState.refs[currentIndex] = { current: initial };
   }
-  
-  const componentRefs = refs.get(currentRender)!;
-  const index = stateIndices.get(currentRender) || 0;
-  stateIndices.set(currentRender, index + 1);
-  
-  if (index >= componentRefs.length) {
-    componentRefs.push({ current: initial });
-  }
-  
-  return componentRefs[index];
+
+  return compState.refs[currentIndex];
 }
 
 /**
- * useReducer hook - manages complex state with a reducer
+ * useReducer — manages complex state with a reducer
  */
 export function useReducer<S, A>(
   reducer: (state: S, action: A) => S,
   initialState: S
 ): [S, (action: A) => void] {
   const [state, setState] = useState(initialState);
-  
+
   const dispatch = (action: A) => {
     setState((prevState) => reducer(prevState, action));
   };
-  
+
   return [state, dispatch];
 }
 
 /**
- * useLayoutEffect hook - runs synchronously after DOM mutations
- */
-export function useLayoutEffect(callback: () => void | (() => void), deps?: any[]): void {
-  // In SSR, useLayoutEffect should not run
-  if (isServer) return;
-  
-  // On client, behave like useEffect but run synchronously
-  useEffect(callback, deps);
-}
-
-/**
- * useErrorBoundary hook - catches errors in child components
+ * useErrorBoundary — catches errors in child components
  */
 export function useErrorBoundary(): [Error | null, () => void] {
   const [error, setError] = useState<Error | null>(null);
@@ -254,7 +319,7 @@ export function useErrorBoundary(): [Error | null, () => void] {
 }
 
 /**
- * useId hook - generates stable unique IDs
+ * useId — generates stable unique IDs
  */
 let idCounter = 0;
 export function useId(): string {
@@ -266,41 +331,28 @@ export function useId(): string {
 }
 
 /**
- * Trigger a re-render for a specific component
+ * Cleanup all hook state for a component within a root
  */
-async function rerender(rendererId: number): Promise<void> {
-  if (!globalRenderCallback || !currentElement || !globalContainer) {
-    console.warn('Cannot rerender: missing render context');
-    return;
-  }
-  
-  try {
-    await globalRenderCallback(currentElement, globalContainer);
-  } catch (error) {
-    console.error('Error during rerender:', error);
+export function cleanupHooks(root: RootState, compId: number): void {
+  const compState = root.components.get(compId);
+  if (compState) {
+    compState.effects.forEach(effect => {
+      if (effect.cleanup) effect.cleanup();
+    });
+    root.components.delete(compId);
   }
 }
 
 /**
- * Cleanup all hooks state for a component
+ * Cleanup all state for an entire root
  */
-export function cleanupHooks(rendererId: number): void {
-  // Run effect cleanups
-  const componentEffects = effects.get(rendererId);
-  if (componentEffects) {
-    componentEffects.forEach(effect => {
-      if (effect.cleanup) {
-        effect.cleanup();
-      }
+export function cleanupRoot(root: RootState): void {
+  root.components.forEach((compState) => {
+    compState.effects.forEach(effect => {
+      if (effect.cleanup) effect.cleanup();
     });
-  }
-  
-  // Clear all state
-  states.delete(rendererId);
-  stateIndices.delete(rendererId);
-  effects.delete(rendererId);
-  memos.delete(rendererId);
-  refs.delete(rendererId);
+  });
+  root.components.clear();
 }
 
 // Re-export context hooks

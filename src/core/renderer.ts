@@ -1,44 +1,66 @@
 /**
  * Client-side renderer
+ *
+ * Each render call creates a RootState that holds all hook state for that
+ * render tree. The renderer tracks the previous VNode so we can diff on
+ * re-renders instead of tearing down the entire DOM.
  */
 
 import { createElement } from './jsx-runtime.js';
-import { prepareRender, finishRender, setRenderCallback } from './hooks.js';
+import {
+  prepareRender,
+  finishRender,
+  setRenderCallback,
+  createRootState,
+  cleanupRoot,
+  type RootState
+} from './hooks.js';
 import { batchUpdates } from './batch.js';
+import { calculatePatches, applyPatches, type Patch } from './vdom.js';
+import { VNode } from './types.js';
 
-let isHydrating = false;
+const isBrowser = typeof document !== 'undefined';
+
+// ---------------------------------------------------------------------------
+// Root tracking — maps containers to their roots
+// ---------------------------------------------------------------------------
+
+const rootMap = new WeakMap<HTMLElement, RootState>();
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 /**
- * Hydrate server-rendered HTML with client-side interactivity
+ * Render a virtual DOM tree into a container element.
  */
-export async function hydrate(element: any, container: HTMLElement): Promise<void> {
-  isHydrating = true;
-  try {
-    await render(element, container);
-  } finally {
-    isHydrating = false;
+export async function render(element: VNode, container: HTMLElement): Promise<void> {
+  if (!isBrowser) {
+    throw new Error(
+      '[baraqex] render() can only be called in a browser. ' +
+      'Use renderToString() for server-side rendering.'
+    );
   }
-}
-
-/**
- * Render a virtual DOM tree to the DOM
- */
-export async function render(element: any, container: HTMLElement): Promise<void> {
   if (!container) {
-    throw new Error('Render target container is required');
+    throw new Error('[baraqex] render() requires a container element');
   }
-  
-  batchUpdates(async () => {
-    const rendererId = prepareRender();
+
+  let root = rootMap.get(container);
+  if (!root) {
+    root = createRootState();
+    rootMap.set(container, root);
+  }
+
+  await batchUpdates(async () => {
+    prepareRender(root);
     try {
-      setRenderCallback(render, element, container);
+      setRenderCallback(render as any, element, container);
+
       const domNode = await createElement(element);
-      
-      if (!isHydrating) {
-        container.innerHTML = '';
-      }
+
+      // Replace container contents
+      container.textContent = '';
       container.appendChild(domNode);
-      
     } finally {
       finishRender();
     }
@@ -46,27 +68,47 @@ export async function render(element: any, container: HTMLElement): Promise<void
 }
 
 /**
- * Create a root for concurrent rendering (React 18+ compatible API)
+ * Hydrate server-rendered HTML.
+ *
+ * In this initial implementation, hydration re-renders the component tree
+ * and replaces the server HTML. A production implementation would walk the
+ * existing DOM, attach event listeners, and reconcile without full replace.
+ */
+export async function hydrate(element: VNode, container: HTMLElement): Promise<void> {
+  // For now, hydration = render. A real implementation would:
+  // 1. Walk existing child nodes
+  // 2. Match them against the VNode tree
+  // 3. Attach event listeners without replacing DOM
+  await render(element, container);
+}
+
+/**
+ * Create a root for React 18+ compatible API.
  */
 export function createRoot(container: HTMLElement) {
+  const root = createRootState();
+  rootMap.set(container, root);
+
   return {
-    render: (element: any) => render(element, container),
+    render: (element: VNode) => render(element, container),
     unmount: () => {
-      container.innerHTML = '';
+      cleanupRoot(root);
+      rootMap.delete(container);
+      container.textContent = '';
     }
   };
 }
 
 /**
- * Check if currently hydrating
+ * Check if a container has an active root.
  */
-export function getIsHydrating(): boolean {
-  return isHydrating;
+export function hasRoot(container: HTMLElement): boolean {
+  return rootMap.has(container);
 }
 
 export default {
   render,
   hydrate,
   createRoot,
-  getIsHydrating
+  hasRoot
 };

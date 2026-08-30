@@ -1,0 +1,32 @@
+{
+  "name": "go-wasm-app",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "description": "Frontend Hamroun app with Go WebAssembly integration",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development node server.js",
+    "build": "cross-env NODE_ENV=production node build.js",
+    "build:wasm": "node build.js --wasm-only",
+    "start": "cross-env NODE_ENV=production node dist/server/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "frontend-hamroun": "latest"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.19.5",
+    "nodemon": "^3.0.1",
+    "vitest": "^0.34.6"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/assets/client.mjs",
+      "require": "./dist/assets/client.js"
+    }
+  }
+}

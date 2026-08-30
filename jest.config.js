@@ -19,11 +19,6 @@ export default {
     'src/server/**/*.ts',
     '!src/**/*.d.ts',
     '!src/**/types.ts',
-    // Exclude empty modules from coverage
-    '!src/router/index.ts',
-    '!src/forms/index.ts',
-    '!src/store/index.ts',
-    '!src/frontend/index.ts',
     // Exclude browser-only files (require browser environment)
     '!src/browser.ts',
     '!src/wasm.ts',

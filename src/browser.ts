@@ -92,4 +92,4 @@ export const readJsonFile = null;
 export const baraqexRenderToString = null;
 export const renderComponent = null;
 
-console.log('Baraqex - Browser build loaded');
+// Debug log removed — use build.mjs or the CLI to verify the build.

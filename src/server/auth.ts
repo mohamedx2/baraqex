@@ -1,4 +1,6 @@
-
+/**
+ * Authentication service — JWT tokens, password hashing, Express middleware
+ */
 
 export interface AuthConfig {
   secret: string;
@@ -16,12 +18,28 @@ export interface User {
 
 export class AuthService {
   private config: AuthConfig;
+  private jwtPromise: Promise<typeof import('jsonwebtoken')> | null = null;
 
   constructor(config: AuthConfig) {
     this.config = {
       expiresIn: '24h',
       ...config
     };
+  }
+
+  private async getJwt(): Promise<typeof import('jsonwebtoken')> {
+    if (!this.jwtPromise) {
+      this.jwtPromise = import('jsonwebtoken').catch((error: any) => {
+        this.jwtPromise = null;
+        if (error.code === 'MODULE_NOT_FOUND') {
+          throw new Error(
+            'jsonwebtoken not installed. Run: npm install jsonwebtoken @types/jsonwebtoken'
+          );
+        }
+        throw error;
+      });
+    }
+    return this.jwtPromise;
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -48,46 +66,35 @@ export class AuthService {
     }
   }
 
-  generateToken(user: Omit<User, 'password'>): string {
-    try {
-      const jwt = require('jsonwebtoken');
-      const options: any = {};
-      
-      if (this.config.expiresIn) {
-        options.expiresIn = this.config.expiresIn;
-      }
-      
-      return jwt.sign(
-        { id: user.id, username: user.username, roles: user.roles || [] },
-        this.config.secret,
-        options
-      );
-    } catch (error: any) {
-      if (error.code === 'MODULE_NOT_FOUND') {
-        throw new Error('jsonwebtoken not installed. Run: npm install jsonwebtoken @types/jsonwebtoken');
-      }
-      throw error;
+  async generateToken(user: Omit<User, 'password'>): Promise<string> {
+    const jwt = await this.getJwt();
+    const options: any = {};
+
+    if (this.config.expiresIn) {
+      options.expiresIn = this.config.expiresIn;
     }
+
+    return jwt.sign(
+      { id: user.id, username: user.username, roles: user.roles || [] },
+      this.config.secret,
+      options
+    );
   }
 
-  verifyToken(token: string): any {
+  async verifyToken(token: string): Promise<any> {
     try {
-      const jwt = require('jsonwebtoken');
+      const jwt = await this.getJwt();
       return jwt.verify(token, this.config.secret);
-    } catch (error: any) {
-      if (error.code === 'MODULE_NOT_FOUND') {
-        throw new Error('jsonwebtoken not installed. Run: npm install jsonwebtoken @types/jsonwebtoken');
-      }
+    } catch {
       return null;
     }
   }
 
-  // Express middleware for authentication
   initialize() {
-    return (req: any, res: any, next: any) => {
+    return async (req: any, res: any, next: any) => {
       const token = this.extractToken(req);
       if (token) {
-        const decoded = this.verifyToken(token);
+        const decoded = await this.verifyToken(token);
         if (decoded) {
           req.user = decoded;
         }
@@ -96,7 +103,6 @@ export class AuthService {
     };
   }
 
-  // Express middleware for requiring authentication
   requireAuth() {
     return (req: any, res: any, next: any) => {
       if (!req.user) {
@@ -106,20 +112,19 @@ export class AuthService {
     };
   }
 
-  // Express middleware for requiring specific roles
   requireRoles(roles: string[]) {
     return (req: any, res: any, next: any) => {
       if (!req.user) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
-      
+
       const userRoles = req.user.roles || [];
       const hasRequiredRole = roles.some(role => userRoles.includes(role));
-      
+
       if (!hasRequiredRole) {
         return res.status(403).json({ message: 'Forbidden' });
       }
-      
+
       return next();
     };
   }

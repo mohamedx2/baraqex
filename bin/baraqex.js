@@ -543,7 +543,7 @@ async function addComponent(componentName, options) {
   let exports = [];
   
   // Base imports
-  imports.push(`import { jsx } from 'frontend-hamroun';`);
+  imports.push(`import { jsx } from 'baraqex';`);
   
   // Add selected features
   if (features.features.includes('useState')) {
@@ -684,7 +684,7 @@ ${renders.join('\n')}
 
 // Format help text for better readability
 function formatHelp(commandName, options) {
-  let help = `\n  ${chalk.bold.cyan('Usage:')} ${chalk.yellow(`frontend-hamroun ${commandName} [options]`)}\n\n`;
+  let help = `\n  ${chalk.bold.cyan('Usage:')} ${chalk.yellow(`baraqex ${commandName} [options]`)}\n\n`;
   
   help += `  ${chalk.bold.cyan('Options:')}\n`;
   options.forEach(opt => {
@@ -692,8 +692,8 @@ function formatHelp(commandName, options) {
   });
   
   help += `\n  ${chalk.bold.cyan('Examples:')}\n`;
-  help += `    ${chalk.yellow(`frontend-hamroun ${commandName} MyComponent`)}\n`;
-  help += `    ${chalk.yellow(`frontend-hamroun ${commandName} NavBar --typescript`)}\n`;
+  help += `    ${chalk.yellow(`baraqex ${commandName} MyComponent`)}\n`;
+  help += `    ${chalk.yellow(`baraqex ${commandName} NavBar --typescript`)}\n`;
   
   return help;
 }
@@ -742,7 +742,7 @@ function showDashboard() {
 // Register commands with improved descriptions
 program
   .command('create [name]')
-  .description('Create a new Frontend Hamroun project')
+  .description('Create a new Baraqex project')
   .option('-t, --template <template>', 'Specify template (basic-app, ssr-template, fullstack-app)')
   .action(createProject);
 
@@ -778,6 +778,144 @@ program
   });
 
 program
+  .command('add:wasm [name]')
+  .description('Create a new WebAssembly module with Go')
+  .option('-p, --path <path>', 'Path where the Go WASM module should be created')
+  .option('-t, --type <type>', 'Type of WASM module (go, rust, c)', 'go')
+  .action(async (moduleName, options) => {
+    displayBanner();
+    createSection('Create Go WASM Module');
+
+    const goInstalled = await checkGo();
+    if (!goInstalled) {
+      console.log(chalk.red('Go must be installed to create WASM modules.'));
+      console.log(chalk.yellow(`Please install Go from ${terminalLink('https://golang.org/dl/', 'https://golang.org/dl/')}`));
+      return;
+    }
+
+    if (!moduleName) {
+      const answers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'moduleName',
+          message: chalk.green('What is your WASM module name?'),
+          default: 'gomodule',
+          validate: input =>
+            /^[a-z0-9-_]+$/.test(input)
+              ? true
+              : 'Module name can only contain lowercase letters, numbers, hyphens, and underscores'
+        }
+      ]);
+      moduleName = answers.moduleName;
+    }
+
+    let modulePath = options.path;
+    if (!modulePath) {
+      const answers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'path',
+          message: chalk.green('Where do you want to create this Go WASM module?'),
+          default: 'src/wasm',
+          validate: input => /^[a-zA-Z0-9-_/\\]+$/.test(input)
+            ? true
+            : 'Path can only contain letters, numbers, slashes, hyphens and underscores'
+        }
+      ]);
+      modulePath = answers.path;
+    }
+
+    const spinner = ora({
+      text: `Creating Go WASM module ${moduleName}...`,
+      color: 'cyan'
+    }).start();
+
+    try {
+      const fullPath = path.join(process.cwd(), modulePath);
+      await fs.ensureDir(fullPath);
+
+      const sourceFile = path.join(__dirname, '..', 'templates', 'go', 'example.go');
+      const destFile = path.join(fullPath, `${moduleName}.go`);
+
+      if (fs.existsSync(sourceFile)) {
+        await fs.copy(sourceFile, destFile);
+      } else {
+        await fs.writeFile(destFile, `package main
+
+import "syscall/js"
+
+func add(this js.Value, args []js.Value) interface{} {
+    return args[0].Int() + args[1].Int()
+}
+
+func main() {
+    c := make(chan struct{})
+    js.Global().Set("goAdd", js.FuncOf(add))
+    <-c
+}
+`);
+      }
+
+      const buildBatFile = path.join(fullPath, 'build.bat');
+      const buildShFile = path.join(fullPath, 'build.sh');
+
+      await fs.writeFile(buildBatFile, `@echo off
+echo Building ${moduleName} Go WASM module...
+set GOOS=js
+set GOARCH=wasm
+go build -o ${moduleName}.wasm ${moduleName}.go
+if %ERRORLEVEL% NEQ 0 (
+    echo Error: Failed to build Go WASM module
+    exit /b 1
+)
+for /f "tokens=*" %%g in ('go env GOROOT') do (set GOROOT=%%g)
+copy "%GOROOT%\\misc\\wasm\\wasm_exec.js" .
+echo Build complete!
+`);
+
+      await fs.writeFile(buildShFile, `#!/bin/bash
+echo "Building ${moduleName} Go WASM module..."
+GOOS=js GOARCH=wasm go build -o ${moduleName}.wasm ${moduleName}.go
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to build Go WASM module"
+    exit 1
+fi
+GOROOT=$(go env GOROOT)
+cp "$GOROOT/misc/wasm/wasm_exec.js" .
+echo "Build complete!"
+`);
+
+      try { await fs.chmod(buildShFile, 0o755); } catch (e) {}
+
+      spinner.succeed(`Go WASM module created at ${chalk.green(fullPath)}`);
+
+      console.log(boxen(
+        `${chalk.bold.green('Go WASM Module Created Successfully!')}\n\n` +
+        `${chalk.bold('To build the WASM module:')}\n` +
+        chalk.cyan(`  cd ${path.relative(process.cwd(), fullPath)}\n`) +
+        chalk.cyan(`  ${process.platform === 'win32' ? 'build.bat' : './build.sh'}\n\n`) +
+        `${chalk.bold('To use in your code:')}\n` +
+        chalk.cyan(`import { loadGoWasm } from 'baraqex';\n\n`) +
+        chalk.cyan(`const wasm = await loadGoWasm('/${path.basename(modulePath)}/${moduleName}.wasm');\n`) +
+        chalk.cyan(`const result = wasm.functions.goAdd(5, 7);\n`),
+        { padding: 1, margin: 1, borderStyle: 'round', borderColor: 'green' }
+      ));
+    } catch (error) {
+      spinner.fail(`Failed to create Go WASM module`);
+      console.error(chalk.red(`Error: ${error.message}`));
+    }
+  });
+
+async function checkGo() {
+  try {
+    await execAsync('go version');
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+program
   .command('dev:tools')
   .description('Show development tools and tips')
   .action(async () => {
@@ -794,7 +932,7 @@ program
         projectInfo = {
           name: packageJson.name,
           version: packageJson.version,
-          isFrontendHamroun: packageJson.dependencies && packageJson.dependencies['frontend-hamroun']
+          isBaraqex: packageJson.dependencies && packageJson.dependencies['baraqex']
         };
       } catch (error) {
         // Continue without project info
@@ -807,18 +945,18 @@ program
         `${chalk.bold('Current Project')}\n\n` +
         `${chalk.dim('Name:')} ${chalk.cyan(projectInfo.name)}\n` +
         `${chalk.dim('Version:')} ${chalk.cyan(projectInfo.version)}\n` +
-        `${chalk.dim('Frontend Hamroun:')} ${projectInfo.isFrontendHamroun ? chalk.green('✓ Detected') : chalk.yellow('✗ Not detected')}`,
+        `${chalk.dim('Baraqex:')} ${projectInfo.isBaraqex ? chalk.green('✓ Detected') : chalk.yellow('✗ Not detected')}`,
         {
           padding: 1,
           margin: 1,
           borderStyle: 'round',
-          borderColor: projectInfo.isFrontendHamroun ? 'green' : 'yellow'
+          borderColor: projectInfo.isBaraqex ? 'green' : 'yellow'
         }
       ));
     } else {
       console.log(boxen(
         `${chalk.yellow('⚠ No project detected')}\n\n` +
-        `Run ${chalk.cyan('frontend-hamroun create my-app')} to create a new project.`,
+        `Run ${chalk.cyan('baraqex create my-app')} to create a new project.`,
         {
           padding: 1,
           margin: 1,
@@ -1120,7 +1258,7 @@ async function showTemplateInfo() {
     }
   ));
   
-  console.log(`\n${chalk.dim('Create a new project:')} ${chalk.cyan('frontend-hamroun create my-app')}`);
+  console.log(`\n${chalk.dim('Create a new project:')} ${chalk.cyan('baraqex create my-app')}`);
 }
 
 // Deployment guide
@@ -1185,7 +1323,7 @@ async function showDebugHelper() {
     `${chalk.bold('Debug Tools:')}\n` +
     `• ${chalk.cyan('npm run debug')} - Debug mode\n` +
     `• Browser DevTools Extensions\n` +
-    `• Frontend Hamroun DevTools\n` +
+    `• Baraqex DevTools\n` +
     `• Performance Profiler`,
     {
       padding: 1,

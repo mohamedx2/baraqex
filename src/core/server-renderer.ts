@@ -59,7 +59,7 @@ function renderNodeToString(vnode: VNode | string | number | boolean | null | un
   }
   
   // Handle objects without type (not VNode)
-  if (typeof vnode !== 'object' || !('type' in vnode)) {
+  if (typeof vnode !== 'object' || vnode.type === undefined) {
     return escapeHtml(String(vnode));
   }
   

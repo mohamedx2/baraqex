@@ -12,7 +12,7 @@ describe('Server Templates', () => {
       
       expect(html).toContain('<!DOCTYPE html>');
       expect(html).toContain('<html lang="en"');
-      expect(html).toContain('<title>Frontend Hamroun App</title>');
+      expect(html).toContain('<title>Baraqex App</title>');
       expect(html).toContain(content);
       expect(html).toContain('<div id="app-root"');
     });

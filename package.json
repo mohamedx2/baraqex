@@ -1,7 +1,7 @@
 {
   "name": "baraqex",
-  "version": "2.0.0",
-  "description": "⚡ A blazing-fast full-stack framework with WASM superpowers. Build universal apps with React-like syntax and Go-powered performance.",
+  "version": "2.0.3",
+  "description": "A full-stack WebAssembly framework for building fast, modern web applications.",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,8 +18,53 @@
       "types": "./dist/browser.d.ts"
     },
     "./server": {
-      "import": "./dist/server.js",
-      "types": "./dist/server.d.ts"
+      "node": "./dist/server/index.js",
+      "import": "./dist/server/index.js",
+      "types": "./dist/server/index.d.ts"
+    },
+    "./server/database": {
+      "import": "./dist/server/database.js",
+      "types": "./dist/server/database.d.ts"
+    },
+    "./server/auth": {
+      "import": "./dist/server/auth.js",
+      "types": "./dist/server/auth.d.ts"
+    },
+    "./server/middleware": {
+      "import": "./dist/server/middleware.js",
+      "types": "./dist/server/middleware.d.ts"
+    },
+    "./server/api-router": {
+      "import": "./dist/server/api-router.js",
+      "types": "./dist/server/api-router.d.ts"
+    },
+    "./wasm": {
+      "import": "./dist/wasm.js",
+      "types": "./dist/wasm.d.ts"
+    },
+    "./server/wasm": {
+      "import": "./dist/server/wasm.js",
+      "types": "./dist/server/wasm.d.ts"
+    },
+    "./jsx-runtime": {
+      "import": "./dist/jsx-runtime.js",
+      "types": "./dist/jsx-runtime.d.ts"
+    },
+    "./hooks": {
+      "import": "./dist/hooks.js",
+      "types": "./dist/hooks.d.ts"
+    },
+    "./router": {
+      "import": "./dist/router.js",
+      "types": "./dist/router.d.ts"
+    },
+    "./store": {
+      "import": "./dist/store.js",
+      "types": "./dist/store.d.ts"
+    },
+    "./forms": {
+      "import": "./dist/forms.js",
+      "types": "./dist/forms.d.ts"
     },
     "./package.json": "./package.json"
   },
@@ -47,8 +92,12 @@
     "CHANGELOG.md",
     "templates/basic-app/",
     "templates/fullstack-template/",
+    "templates/fullstack-app/",
     "templates/ssr-template/",
     "templates/wasm/",
+    "templates/complete-app/",
+    "templates/go-wasm-app/",
+    "templates/go/",
     "!templates/**/node_modules/",
     "!templates/**/dist/",
     "!templates/**/package-lock.json",
@@ -84,12 +133,10 @@
   },
   "keywords": [
     "baraqex",
-    "frontend-hamroun",
     "framework",
     "fullstack",
     "frontend",
     "backend",
-    "react",
     "jsx",
     "ssr",
     "server-side-rendering",
@@ -108,7 +155,7 @@
     "isomorphic",
     "virtual-dom",
     "hooks",
-    "arabic"
+    "react"
   ],
   "author": {
     "name": "Mohamed X",
@@ -132,38 +179,31 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "boxen": "^7.1.1",
+    "chalk": "^5.3.0",
     "chokidar": "^4.0.3",
+    "commander": "^11.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "figlet": "^1.7.0",
+    "fs-extra": "^11.1.1",
     "glob": "^11.0.2",
+    "gradient-string": "^3.0.0",
+    "inquirer": "^9.2.10",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^5.7.0",
+    "mysql2": "^3.6.1",
+    "nanospinner": "^1.1.0",
     "open": "^10.1.2",
+    "ora": "^7.0.1",
+    "pg": "^8.11.3",
+    "terminal-link": "^3.0.0",
+    "update-notifier": "^6.0.2",
     "ws": "^8.18.2"
   },
-  "peerDependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.0"
-  },
-  "peerDependenciesMeta": {
-    "express": {
-      "optional": true
-    },
-    "cors": {
-      "optional": true
-    },
-    "mongodb": {
-      "optional": true
-    },
-    "mysql2": {
-      "optional": true
-    },
-    "pg": {
-      "optional": true
-    },
-    "bcryptjs": {
-      "optional": true
-    },
-    "jsonwebtoken": {
-      "optional": true
-    }
-  },
+  "peerDependencies": {},
+  "peerDependenciesMeta": {},
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@types/bcryptjs": "^2.4.6",
@@ -179,15 +219,6 @@
     "rimraf": "^5.0.0",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
-    "typescript": "^5.0.0"
-  },
-  "optionalDependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "express": "^4.18.0",
-    "jsonwebtoken": "^9.0.0",
-    "mongodb": "^6.0.0",
-    "mysql2": "^3.6.0",
-    "pg": "^8.11.0"
+    "typescript": "^5.9.3"
   }
 }
