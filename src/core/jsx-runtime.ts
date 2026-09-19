@@ -17,19 +17,17 @@ const isBrowser = typeof document !== 'undefined';
 /**
  * Create a virtual DOM node from JSX
  */
-export function jsx(type: string | Function, props: any, key?: string | number): VNode {
-  const processedProps = { ...props };
+export function jsx(type: string | Function, props: any, ...children: any[]): VNode {
+  const { key, ...restProps } = props || {};
+  const processedProps = { ...restProps };
 
-  if (key !== undefined) {
-    processedProps.key = key;
+  // Children from trailing arguments (classic esbuild/babel/swc transform)
+  if (children.length > 0) {
+    processedProps.children = children.length === 1 ? children[0] : children;
   }
 
-  // Handle children from additional arguments (babel/swc transform)
-  if (arguments.length > 3) {
-    processedProps.children = Array.prototype.slice.call(arguments, 3);
-  }
-
-  return { type, props: processedProps, key: processedProps.key };
+  const vnodeKey = key ?? processedProps.key;
+  return { type, props: processedProps, key: vnodeKey };
 }
 
 /**
@@ -48,7 +46,10 @@ export function jsxDEV(
   _source?: any,
   _self?: any
 ): VNode {
-  return jsx(type, props, key);
+  if (key !== undefined) {
+    return jsx(type, { ...props, key });
+  }
+  return jsx(type, props);
 }
 
 /**
