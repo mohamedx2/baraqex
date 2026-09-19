@@ -57,16 +57,20 @@ app.get('/api/users', (req, res) => {
   res.json(store.users);
 });
 
-app.get('/api/users/:id', (req, res) => {
+app.get('/api/users/:id', (req: Request, res: Response) => {
   const user = store.users.find((u) => u.id === parseInt(req.params.id, 10));
-  if (user) return res.json(user);
+  if (user) {
+    res.json(user);
+    return;
+  }
   res.status(404).json({ error: 'User not found' });
 });
 
-app.get('/api/posts', (req, res) => {
+app.get('/api/posts', (req: Request, res: Response) => {
   const { authorId } = req.query;
   if (authorId) {
-    return res.json(store.posts.filter((p) => p.authorId === parseInt(authorId as string, 10)));
+    res.json(store.posts.filter((p) => p.authorId === parseInt(authorId as string, 10)));
+    return;
   }
   res.json(store.posts);
 });
@@ -134,6 +138,20 @@ async function buildStyles() {
 // Build the Tailwind stylesheet used by the SSR-rendered page (both modes)
 await buildStyles();
 
+// In dev, bundle the client with esbuild (rebuilds on change via the watcher below)
+if (isDev) {
+  await setupEsbuild();
+}
+
+// Only load the Go runtime scripts when the WASM module has been built
+// (`npm run build:wasm` requires Go). Off by default so dev works without Go.
+const hasWasm = existsSync(path.join(__dirname, 'public', 'wasm', 'example.wasm'))
+  && existsSync(path.join(__dirname, 'public', 'wasm', 'wasm_exec.js'));
+
+const wasmScripts = hasWasm
+  ? '<script src="/wasm/wasm_exec.js"></script>'
+  : '<script>console.warn("Go WASM not built — run `npm run build:wasm` (requires Go)");</script>';
+
 // ---------------------------------------------------------------------------
 // SSR: render the App on the server, then hydrate on the client
 // ---------------------------------------------------------------------------
@@ -160,11 +178,12 @@ app.get('*', async (req: Request, res: Response, next: NextFunction) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Baraqex Full-Stack App (SSR + WASM + Go)</title>
   <link rel="stylesheet" href="/build/styles.css">
+  <link rel="icon" href="data:,">
   <script>window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};</script>
 </head>
 <body>
   <div id="root">${content}</div>
-  <script src="/wasm/wasm_exec.js"></script>
+  ${wasmScripts}
   ${isDev ? '<script src="/socket.io/socket.io.js"></script>' : ''}
   <script src="/build/main.js" type="module"></script>
 </body>
