@@ -1,6 +1,6 @@
 {
   "name": "baraqex",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "A full-stack WebAssembly framework for building fast, modern web applications.",
   "main": "dist/index.js",
   "module": "dist/index.js",
