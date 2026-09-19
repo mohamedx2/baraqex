@@ -63,11 +63,20 @@ function buildWasm() {
 
 function copyRuntime() {
   const root = goRoot();
-  const wasmExec = path.join(root, 'lib', 'wasm', 'wasm_exec.js');
+  const candidates = [
+    path.join(root, 'lib', 'wasm', 'wasm_exec.js'),
+    path.join(root, 'misc', 'wasm', 'wasm_exec.js')
+  ];
+  const wasmExec = candidates.find((p) => existsSync(p));
   const dest = path.join(outputDir, 'wasm_exec.js');
 
-  if (!existsSync(wasmExec)) {
-    console.warn(`⚠️  wasm_exec.js not found at ${wasmExec}. You must copy it manually.`);
+  if (!wasmExec) {
+    console.warn(
+      '⚠️  wasm_exec.js not found in this Go install. ' +
+      'Copy it to public/wasm/wasm_exec.js manually:\n' +
+      `  cp "${candidates.join('"  OR  "')}" ${dest}\n` +
+      '(location varies by Go version: misc/wasm or lib/wasm)'
+    );
     return;
   }
 
