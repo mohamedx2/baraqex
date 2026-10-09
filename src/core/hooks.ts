@@ -68,6 +68,23 @@ export function prepareRender(root?: RootState, componentId?: number): number {
   return currentComponentId || 0;
 }
 
+/**
+ * Begin a top-level render/hydrate pass.
+ *
+ * Resets the component-id counter so the function components encountered in
+ * this pass receive the same ids as in the previous pass (deterministic tree
+ * shape). This is what makes hook state (useState/useEffect) persist across
+ * re-renders. Without the reset every pass allocates fresh ids, hook state is
+ * lost, and any effect that calls setState triggers an infinite re-render
+ * loop.
+ */
+export function beginRenderPass(root?: RootState): number {
+  if (root) {
+    root.nextComponentId = 0;
+  }
+  return prepareRender(root);
+}
+
 export function finishRender(): void {
   currentComponentId = null;
 }

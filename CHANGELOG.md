@@ -5,6 +5,34 @@ All notable changes to Baraqex will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.9] - 2026-10-09
+
+### Fixed
+- **Critical: infinite re-render loop on hydration / any re-render.** Component
+  ids were assigned with a counter that was never reset between render passes,
+  so hooks (`useState`, `useEffect`, …) never kept their state across
+  re-renders. Any `useEffect` that called `setState` (e.g. the fullstack
+  template's `HomePage` fetching users on load) triggered an endless
+  `render → effect → setState → render` microtask loop that starved the event
+  loop — pages only ever appeared to load (the SSR HTML stayed visible) but
+  never became interactive, kept the browser spinner spinning, and links/buttons
+  did nothing ("takes big time to load" / "loads and doesn't open").
+  Render passes now start with `beginRenderPass()`, which resets the
+  component-id counter so ids (and therefore hook state) are stable across
+  re-renders. Verified in-browser: DOMContentLoaded ~95 ms, navigation, state
+  persistence, and the Go WASM demo all work.
+- Added regression tests (`tests/client/hooks.test.ts`) that fail without the fix.
+
+## [2.0.8] - 2026-10-09
+
+### Changed
+- **Fullstack template performance:** server bundle minified in production,
+  HTML + WASM compressed by default, aggressive asset cache headers
+  (`/wasm/*` immutable, `/build/*` 1 h in prod, `no-store` in dev), `wasm_exec.js`
+  injected only on the WASM route (deferred), CSS bundled through
+  Tailwind/PostCSS with instant rebuilds, and the client no longer imports
+  the stylesheet (styles served via the server).
+
 ## [2.0.0] - 2026-01-09
 
 ### 🚀 Major Release

@@ -8,6 +8,7 @@
 
 import { createElement, applyProps, Fragment } from './jsx-runtime.js';
 import {
+  beginRenderPass,
   prepareRender,
   finishRender,
   setRenderCallback,
@@ -53,7 +54,7 @@ export async function render(element: VNode, container: HTMLElement): Promise<vo
   }
 
   await batchUpdates(async () => {
-    prepareRender(root);
+    beginRenderPass(root);
     try {
       setRenderCallback(render as any, element, container);
 
@@ -179,7 +180,7 @@ export async function hydrate(element: VNode, container: HTMLElement): Promise<v
   }
 
   await batchUpdates(async () => {
-    prepareRender(root);
+    beginRenderPass(root);
     try {
       setRenderCallback(render as any, element, container);
 
