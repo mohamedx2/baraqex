@@ -18,9 +18,15 @@ export interface GoWasmInstance {
 }
 
 /**
- * Load Go WASM module in the browser (like your working frontend code)
+ * Cache loaded WASM instances per URL so visiting a route (or re-mounting a
+ * component) doesn't re-fetch, re-compile, or re-run the module every time.
  */
-export async function loadGoWasm(
+const wasmCache = new Map<string, Promise<GoWasmInstance>>();
+
+/**
+ * Load Go WASM module in the browser (cached per URL).
+ */
+export function loadGoWasm(
   wasmUrl: string,
   options: GoWasmOptions = {}
 ): Promise<GoWasmInstance> {
@@ -28,6 +34,24 @@ export async function loadGoWasm(
     throw new Error('loadGoWasm() is for browser use only. Use loadGoWasmFromFile() in Node.js.');
   }
 
+  const cached = wasmCache.get(wasmUrl);
+  if (cached) return cached;
+
+  const request = loadGoWasmInternal(wasmUrl, options)
+    .catch((error) => {
+      // Don't cache failures — allow a retry next time the module is requested.
+      wasmCache.delete(wasmUrl);
+      throw error;
+    });
+
+  wasmCache.set(wasmUrl, request);
+  return request;
+}
+
+async function loadGoWasmInternal(
+  wasmUrl: string,
+  options: GoWasmOptions = {}
+): Promise<GoWasmInstance> {
   try {
     // Check if Go WASM runtime is available (like your frontend code)
     if (!window.Go) {

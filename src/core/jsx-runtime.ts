@@ -77,7 +77,7 @@ function createTextNode(text: string): Text {
 /**
  * Apply props to a real DOM element
  */
-function applyProps(element: HTMLElement, props: Record<string, any>): void {
+export function applyProps(element: HTMLElement, props: Record<string, any>): void {
   for (const [key, value] of Object.entries(props)) {
     if (key === 'children') continue;
 
