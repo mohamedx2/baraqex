@@ -104,7 +104,7 @@ async function buildServer() {
     target: ['node18'],
     format: 'esm',
     outfile: path.join(outdir, 'server.js'),
-    external: ['express', 'cors', 'compression', 'socket.io', 'dotenv'],
+    external: ['express', 'cors', 'compression', 'socket.io', 'dotenv', 'postcss', 'tailwindcss', 'autoprefixer', 'chokidar'],
     plugins: [
       {
         name: 'external-all',
@@ -114,7 +114,8 @@ async function buildServer() {
       }
     ],
     define: { 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development') },
-    sourcemap: false
+    sourcemap: false,
+    minify: process.env.NODE_ENV === 'production'
   });
   console.log('✅ Server build complete');
 }

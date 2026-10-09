@@ -67,7 +67,7 @@ export function App({ route, initialState }: AppProps) {
       <main className="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
         {current === 'home' && <HomePage initialState={initialState} />}
         {current === 'about' && <AboutPage />}
-        {current === 'wasm' && <WasmDemo />}
+        {current === 'wasm' && <WasmDemo hasWasm={!!initialState?.hasWasm} />}
       </main>
 
       <footer className="bg-gray-800 text-white">

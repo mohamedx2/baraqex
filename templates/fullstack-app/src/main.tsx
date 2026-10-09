@@ -1,6 +1,5 @@
 import { hydrate, jsx } from 'baraqex';
 import { App } from './App';
-import './styles.css';
 
 declare global {
   interface Window {

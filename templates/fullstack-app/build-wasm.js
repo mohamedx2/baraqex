@@ -43,9 +43,9 @@ function buildWasm() {
     execSync('go mod init wasm-example', { cwd: goDir, stdio: 'inherit' });
   }
 
-  // Compile with the js/wasm target
+  // Compile with the js/wasm target; -s -w strips debug info to shrink the module
   execSync(
-    `go build -o "${wasmFile}" main.go`,
+    'go build -ldflags="-s -w" -o "' + wasmFile + '" main.go',
     {
       cwd: goDir,
       stdio: 'inherit',

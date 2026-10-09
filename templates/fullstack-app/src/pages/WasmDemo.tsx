@@ -1,19 +1,39 @@
 import { jsx, useState, useEffect, batchUpdates } from 'baraqex';
 import { loadGoWasm } from 'baraqex';
 
-export function WasmDemo() {
+/**
+ * Ensure the Go runtime (wasm_exec.js) is available before loading the module.
+ * The SSR page preloads it on direct visits; SPA navigation loads it on demand.
+ */
+function ensureWasmRuntime(): Promise<void> {
+  const w = window as any;
+  if (w.Go) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = '/wasm/wasm_exec.js';
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('/wasm/wasm_exec.js could not be loaded'));
+    document.head.appendChild(script);
+  });
+}
+
+export function WasmDemo({ hasWasm = false }: { hasWasm?: boolean }) {
   const [ready, setReady] = useState(false);
-  const [status, setStatus] = useState('Preparing Go WASM…');
-  const [output, setOutput] = useState('');
+  const [status, setStatus] = useState(hasWasm ? 'Preparing Go WASM…' : 'Go WASM not built');
+  const [output, setOutput] = useState(hasWasm ? '' : 'Run `npm run build:wasm` (requires Go) to enable this page.');
   const [a, setA] = useState('5');
   const [b, setB] = useState('7');
   const [n, setN] = useState('10');
 
   useEffect(() => {
+    if (!hasWasm) return;
     let cancelled = false;
     (async () => {
       try {
         setStatus('Loading Go WASM module…');
+        await ensureWasmRuntime();
+        if (cancelled) return;
         await loadGoWasm('/wasm/example.wasm');
         if (cancelled) return;
         batchUpdates(() => {

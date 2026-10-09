@@ -8,7 +8,7 @@
     "start": "node dist/server.js",
     "prod": "npm run build && npm run start",
     "dev": "tsx server.ts",
-    "build": "node build.mjs",
+    "build": "cross-env NODE_ENV=production node build.mjs",
     "build:wasm": "node build-wasm.js",
     "build:all": "node build-wasm.js && node build.mjs"
   },

@@ -28,7 +28,17 @@ const io = new SocketServer(httpServer, {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(compression());
+app.use(compression({
+  filter: (req, res) => {
+    const type = res.getHeader('Content-Type');
+    if (type === undefined) return true;
+    // Compress text-like responses plus binary assets that gzip well (wasm, svg, fonts)
+    if (/^(text\/|application\/(json|javascript|xml|wasm)|image\/svg|font\/)/i.test(String(type))) {
+      return true;
+    }
+    return compression.filter(req, res);
+  }
+}));
 app.use(cors());
 
 // ---------------------------------------------------------------------------
@@ -78,9 +88,15 @@ app.get('/api/posts', (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 // Static assets: built client bundle + public (incl. WASM output)
 // ---------------------------------------------------------------------------
-app.use('/build', express.static(path.join(__dirname, 'build')));
-app.use('/wasm', express.static(path.join(__dirname, 'public', 'wasm')));
-app.use(express.static(path.join(__dirname, 'public')));
+// Dev must never cache rebuilt bundles; prod can cache them briefly. WASM files
+// are rebuilt via `npm run build:wasm` and are safe to cache for a long time.
+const buildCache = isDev
+  ? { setHeaders: (res: Response) => res.setHeader('Cache-Control', 'no-store') }
+  : { maxAge: '1h' };
+const wasmCache = { maxAge: '1y', immutable: true };
+app.use('/build', express.static(path.join(__dirname, 'build'), buildCache));
+app.use('/wasm', express.static(path.join(__dirname, 'public', 'wasm'), wasmCache));
+app.use(express.static(path.join(__dirname, 'public'), buildCache));
 
 // ---------------------------------------------------------------------------
 // Dev mode: esbuild context (bundles src + rebuilds on change)
@@ -135,22 +151,17 @@ async function buildStyles() {
   console.log('✅ styles.css built');
 }
 
-// Build the Tailwind stylesheet used by the SSR-rendered page (both modes)
-await buildStyles();
+// Build the Tailwind stylesheet and (in dev) rebuild it on change. In prod the
+// file is already written by `npm run build`, so only (re)build when missing.
+await Promise.all([
+  isDev || !existsSync(path.join(__dirname, 'build', 'styles.css')) ? buildStyles() : Promise.resolve(),
+  isDev ? setupEsbuild() : Promise.resolve()
+]);
 
-// In dev, bundle the client with esbuild (rebuilds on change via the watcher below)
-if (isDev) {
-  await setupEsbuild();
-}
-
-// Only load the Go runtime scripts when the WASM module has been built
-// (`npm run build:wasm` requires Go). Off by default so dev works without Go.
+// Only used when the Go WASM module has been built (`npm run build:wasm`,
+// requires Go). Off by default so dev works without Go.
 const hasWasm = existsSync(path.join(__dirname, 'public', 'wasm', 'example.wasm'))
   && existsSync(path.join(__dirname, 'public', 'wasm', 'wasm_exec.js'));
-
-const wasmScripts = hasWasm
-  ? '<script src="/wasm/wasm_exec.js"></script>'
-  : '<script>console.warn("Go WASM not built — run `npm run build:wasm` (requires Go)");</script>';
 
 // ---------------------------------------------------------------------------
 // SSR: render the App on the server, then hydrate on the client
@@ -166,10 +177,19 @@ app.get('*', async (req: Request, res: Response, next: NextFunction) => {
       route,
       serverTime: new Date().toISOString(),
       serverRendered: true,
-      users: store.users
+      users: store.users,
+      hasWasm
     };
 
     const content = await renderToString(jsx(App, { route, initialState }));
+
+    // Load the Go runtime only on the /wasm page — Home/About never pay for it.
+    // Direct visits get it server-side; SPA navigation loads it dynamically.
+    const wasmRuntimeScript = req.path.startsWith('/wasm')
+      ? (hasWasm
+          ? '<script src="/wasm/wasm_exec.js" defer></script>'
+          : '<script>console.warn("Go WASM not built — run `npm run build:wasm` (requires Go)");</script>')
+      : '';
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -183,8 +203,8 @@ app.get('*', async (req: Request, res: Response, next: NextFunction) => {
 </head>
 <body>
   <div id="root">${content}</div>
-  ${wasmScripts}
-  ${isDev ? '<script src="/socket.io/socket.io.js"></script>' : ''}
+  ${wasmRuntimeScript}
+  ${isDev ? '<script src="/socket.io/socket.io.js" defer></script>' : ''}
   <script src="/build/main.js" type="module"></script>
 </body>
 </html>`;
@@ -215,6 +235,9 @@ if (isDev) {
   watcher.on('change', async (changedPath) => {
     console.log(`[Watcher] Changed: ${changedPath}`);
     try {
+      if (changedPath.endsWith('styles.css')) {
+        await buildStyles();
+      }
       await esbuildContext?.rebuild();
       io.emit('reload');
       console.log('[Watcher] Rebuild + reload sent');
