@@ -18,11 +18,14 @@ function parseRoute(pathname: string): string {
 export function App({ route, initialState }: AppProps) {
   const [current, setCurrent] = useState<string>(parseRoute(route || (typeof window !== 'undefined' ? window.location.pathname : '/')));
 
-  const navigate = (target: string) => {
+  const navigate = (e: any, target: string, href: string) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+      return; // let the browser handle new-tab / new-window navigation
+    }
+    e.preventDefault();
     setCurrent(target);
     if (typeof window !== 'undefined') {
-      const path = target === 'home' ? '/' : `/${target}`;
-      window.history.pushState(null, '', path);
+      window.history.pushState(null, '', href);
     }
   };
 
@@ -36,22 +39,24 @@ export function App({ route, initialState }: AppProps) {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="bg-blue-700 text-white shadow">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button onClick={() => navigate('home')} className="text-xl font-bold hover:text-blue-100">
+          <a href="/" onClick={(e: any) => navigate(e, 'home', '/')} className="text-xl font-bold hover:text-blue-100">
             Baraqex Full-Stack
-          </button>
+          </a>
           <nav>
             <ul className="flex space-x-6">
               {navItems.map((item) => (
                 <li key={item.key}>
-                  <button
-                    onClick={() => navigate(item.key)}
+                  <a
+                    href={item.href}
+                    onClick={(e: any) => navigate(e, item.key, item.href)}
+                    aria-current={current === item.key ? 'page' : undefined}
                     className={
                       'hover:text-blue-200 ' +
                       (current === item.key ? 'underline font-semibold' : '')
                     }
                   >
                     {item.label}
-                  </button>
+                  </a>
                 </li>
               ))}
             </ul>

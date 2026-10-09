@@ -1,4 +1,4 @@
-import { jsx, useState } from 'baraqex';
+import { jsx, useState, useEffect } from 'baraqex';
 
 export interface HomeState {
   users?: any[];
@@ -6,19 +6,62 @@ export interface HomeState {
   serverTime?: string;
 }
 
+let usersCache: any[] | null = null;
+let usersRequest: Promise<any[]> | null = null;
+
+async function fetchUsers(): Promise<any[]> {
+  if (usersRequest) return usersRequest;
+  usersRequest = fetch('/api/users').then((res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }).finally(() => {
+    usersRequest = null;
+  });
+  return usersRequest;
+}
+
 export function HomePage({ initialState }: { initialState?: any }) {
   const initial: HomeState = initialState || { users: [], posts: [] };
-  const [users, setUsers] = useState<any[]>(initial.users || []);
+  const [users, setUsers] = useState<any[]>(usersCache || initial.users || []);
+  const [loading, setLoading] = useState(usersCache === null && !initial.users);
   const [message, setMessage] = useState('');
 
+  useEffect(() => {
+    if (usersCache) {
+      setUsers(usersCache);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    fetchUsers()
+      .then((data) => {
+        if (cancelled) return;
+        usersCache = data;
+        setUsers(data);
+        setLoading(false);
+      })
+      .catch((e: any) => {
+        if (cancelled) return;
+        setLoading(false);
+        setMessage('Failed to load data: ' + e.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const refresh = async () => {
+    setLoading(true);
+    setMessage('');
     try {
-      const res = await fetch('/api/users');
-      const data = await res.json();
+      usersCache = null;
+      const data = await fetchUsers();
       setUsers(data);
       setMessage('Data refreshed from /api/users');
     } catch (e: any) {
       setMessage('Failed to load data: ' + e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,22 +87,27 @@ export function HomePage({ initialState }: { initialState?: any }) {
           <h2 className="text-xl font-semibold text-gray-800">Users (fetched via API)</h2>
           <button
             onClick={refresh}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-40"
+            disabled={loading}
           >
-            Refresh
+            {loading ? 'Loading…' : 'Refresh'}
           </button>
         </div>
         {message && <p className="text-green-700 text-sm mb-3">{message}</p>}
-        <ul className="divide-y divide-gray-200">
-          {(users || []).map((user: any) => (
-            <li key={user.id} className="py-2 flex items-center justify-between">
-              <span className="font-medium">{user.name}</span>
-              <span className="text-sm text-gray-500">{user.email}</span>
-            </li>
-          ))}
-        </ul>
-        {(users || []).length === 0 && (
-          <p className="text-gray-500 text-sm">No users loaded yet. Click Refresh.</p>
+        {loading && users.length === 0 ? (
+          <p className="text-gray-500 text-sm">Loading users…</p>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {(users || []).map((user: any) => (
+              <li key={user.id} className="py-2 flex items-center justify-between">
+                <span className="font-medium">{user.name}</span>
+                <span className="text-sm text-gray-500">{user.email}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {!loading && (users || []).length === 0 && !message && (
+          <p className="text-gray-500 text-sm">No users loaded yet.</p>
         )}
       </section>
     </div>

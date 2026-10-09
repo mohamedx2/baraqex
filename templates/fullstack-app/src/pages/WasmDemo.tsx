@@ -3,7 +3,7 @@ import { loadGoWasm } from 'baraqex';
 
 export function WasmDemo() {
   const [ready, setReady] = useState(false);
-  const [status, setStatus] = useState('Loading Go WASM...');
+  const [status, setStatus] = useState('Preparing Go WASM…');
   const [output, setOutput] = useState('');
   const [a, setA] = useState('5');
   const [b, setB] = useState('7');
@@ -13,6 +13,7 @@ export function WasmDemo() {
     let cancelled = false;
     (async () => {
       try {
+        setStatus('Loading Go WASM module…');
         await loadGoWasm('/wasm/example.wasm');
         if (cancelled) return;
         batchUpdates(() => {
